@@ -2,10 +2,10 @@
 
 from .base import *
 
-DEBUG = False
+DEBUG = TRUE
 
-# Add these lines
 ALLOWED_HOSTS = ['130.61.246.120', 'localhost', '127.0.0.1']  # Temporary for debugging
+ALLOWED_HOSTS = ['*']  # Temporary for debugging
 
 LOGGING = {
     'version': 1,

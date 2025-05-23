@@ -5,6 +5,8 @@ import os
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ROOT_URLCONF = 'config.urls'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 env = environ.Env()
 env.read_env(os.path.join(BASE_DIR, '.env'))
@@ -14,6 +16,15 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 DATABASES = {
     'default': env.db('DATABASE_URL', default='postgres:///myproperty')
 }
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
 
 # Update media/config for S3
 #AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
