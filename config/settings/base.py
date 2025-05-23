@@ -18,8 +18,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-SECRET_KEY = env('SECRET_KEY')
-
 # Add proper TEMPLATES configuration
 TEMPLATES = [
     {
@@ -42,6 +40,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 env = environ.Env()
 env.read_env(os.path.join(BASE_DIR, '.env'))
+
+SECRET_KEY = env('SECRET_KEY')
 
 # Move all common settings here from original settings.py
 # Update database config to use PostgreSQL
