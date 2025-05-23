@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 import os
 import sys
+from django.core.management import execute_from_command_line
+
+# Set default to production, override locally via environment
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "real_estate.settings.production")
     try:
-        from django.core.management import execute_from_command_line
+        execute_from_command_line(sys.argv)
     except ImportError as exc:
         raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable?"
+            "Couldn't import Django. Make sure:"
+            "\n1. You're in a virtual environment"
+            "\n2. Django is installed (pip install django)"
         ) from exc
-    execute_from_command_line(sys.argv)
+
+# Development Note: For local development, use:
+# export DJANGO_SETTINGS_MODULE=config.settings.development

@@ -1,65 +1,73 @@
-# -*- coding: utf-8 -*-
-
 from pathlib import Path
-import os
 import environ
+import os
 
+# ----- Path Configuration -----
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-ROOT_URLCONF = 'config.urls'
-WSGI_APPLICATION = 'config.wsgi.application'
+ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',  # Required for admin
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Required for admin
-    'django.contrib.messages.middleware.MessageMiddleware',  # Required for admin
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-# Add proper TEMPLATES configuration
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-# Add static files configuration
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# ----- Environment Setup -----
 env = environ.Env()
-env.read_env(os.path.join(BASE_DIR, '.env'))
+env.read_env(BASE_DIR / ".env")  # Load before other settings
 
-SECRET_KEY = env('SECRET_KEY')
+# ----- Core Settings -----
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env.bool("DEBUG", False)
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Move all common settings here from original settings.py
-# Update database config to use PostgreSQL
-DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres:///myproperty')
-}
+# ----- Security -----
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
+# ----- Database -----
+DATABASES = {"default": env.db("DATABASE_URL", default="postgresql:///myproperty")}
+
+# ----- Applications -----
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "listings",  # Custom app
 ]
 
-# Update media/config for S3
-#AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-#AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-#AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
-#DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# ----- Middleware -----
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",  # Session management
+    "django.middleware.common.CommonMiddleware",  # URL normalization
+    "django.middleware.csrf.CsrfViewMiddleware",  # CSRF protection
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # User auth
+    "django.contrib.messages.middleware.MessageMiddleware",  # Flash messaging
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",  # Clickjacking
+]
+
+# ----- Templates -----
+TEMPLATES = [{
+    "BACKEND": "django.template.backends.django.DjangoTemplates",
+    "DIRS": [BASE_DIR / "templates"],
+    "APP_DIRS": True,  # Auto-discovery for app templates
+    "OPTIONS": {
+        "context_processors": [
+            "django.template.context_processors.debug",
+            "django.template.context_processors.request",  # Required for admin
+            "django.contrib.auth.context_processors.auth",  # User context
+            "django.contrib.messages.context_processors.messages",  # Messages
+        ],
+    },
+}]
+
+# ----- Static Files -----
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # Production collection directory
+
+# ----- Authentication -----
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
