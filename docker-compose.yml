@@ -24,7 +24,7 @@ services:
       POSTGRES_DB: real_estate
       POSTGRES_USER: appuser
       POSTGRES_PASSWORD: securepassword
-      DJANGO_SETTINGS_MODULE: real_estate.settings.production
+      DJANGO_SETTINGS_MODULE: config.settings.production
     ports:
       - "8000:8000"
     depends_on:
