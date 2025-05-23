@@ -17,8 +17,8 @@ services:
   web:
     build: .
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py migrate;
+             exec python manage.py runserver 0.0.0.0:8000"
     environment:
       POSTGRES_HOST: db
       POSTGRES_DB: real_estate
