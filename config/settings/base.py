@@ -18,6 +18,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SECRET_KEY = env('SECRET_KEY')
+
 # Add proper TEMPLATES configuration
 TEMPLATES = [
     {

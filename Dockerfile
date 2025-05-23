@@ -19,4 +19,6 @@ RUN pip install --no-cache-dir \
 
 COPY . .
 
+COPY .env /app/
+
 EXPOSE 8000
