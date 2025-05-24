@@ -17,9 +17,13 @@ DEBUG = env.bool("DEBUG", False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ----- Security -----
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+ALLOWED_HOSTS = ['*'] if DEBUG else env.list('ALLOWED_HOSTS')
 
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() 
+    for origin in env.list("CSRF_TRUSTED_ORIGINS", default=[])
+    if origin.startswith(('http://', 'https://'))
+]
 # ----- Database -----
 DATABASES = {"default": env.db("DATABASE_URL", default="postgresql:///myproperty")}
 
