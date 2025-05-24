@@ -86,6 +86,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
     depends_on:
       - web
     networks:
@@ -96,6 +97,8 @@ volumes:
   postgres_data:
   prometheus_data:
   django_logs:
+  nginx_logs:
+    driver: local
 
 networks:
   backend:
