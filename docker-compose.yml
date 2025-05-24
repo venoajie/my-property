@@ -43,8 +43,10 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.${DJANGO_ENV:-production}  # Environment-based config
       STREAM_CHAT_API_KEY: ${STREAM_CHAT_API_KEY} 
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       POSTGRES_HOST: db
       PYTHONUNBUFFERED: 1
+
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:
@@ -115,6 +117,18 @@ volumes:
     driver: local
   staticfiles:
     driver: local
+
+  migrations:
+    build: .
+    command: python manage.py migrate --no-input
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: on-failure
 
 networks:
   backend:
