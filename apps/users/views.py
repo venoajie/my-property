@@ -2,6 +2,7 @@
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django_ratelimit.decorators import ratelimit
+from django.views.decorators.http import require_POST
 
 @require_POST
 @ratelimit(key="post:username", rate="3/m", method="POST")
