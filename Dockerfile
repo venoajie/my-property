@@ -28,7 +28,7 @@ COPY requirements/ /app/requirements/
 RUN pip install --no-cache-dir \
     -r requirements/base.txt \
     -r requirements/prod.txt \
-    pip check  # Verify all dependencies
+    check  # Verify all dependencies
 
 # Copy application code
 COPY . .
