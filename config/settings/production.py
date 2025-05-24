@@ -50,11 +50,11 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 # ------------------------ Middleware -----------------------------
 MIDDLEWARE = [
-    # Security-focused middleware first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",  # Added
     "django_ratelimit.middleware.RatelimitMiddleware",
-] + MIDDLEWARE[3:]  # Preserve remaining base middleware
+] + MIDDLEWARE[3:]  
 
 # ------------------------ Static Files ---------------------------
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
