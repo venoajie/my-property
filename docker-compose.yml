@@ -40,7 +40,17 @@ services:
       retries: 3
       start_period: 20s
 
-
+  tests:
+    build: .
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py test apps.core apps.listings apps.users"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   postgres_data:
 

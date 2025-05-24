@@ -1,5 +1,6 @@
-# -*- coding: utf-8 -*-
-
-pytest==8.1.1
-pytest-django==4.7.0
+# requirements/dev.txt
+-r base.txt
+pytest
+pytest-django
+coverage
 python-dotenv==1.0.1
