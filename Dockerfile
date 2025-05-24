@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ssl/rootCA.crt /usr/local/share/ca-certificates/
+COPY nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
+
 RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
 
