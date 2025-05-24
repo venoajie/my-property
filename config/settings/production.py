@@ -14,8 +14,8 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
 SECURE_HSTS_SECONDS = 31536000  # 1 year HSTS
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # For reverse proxies
-
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # ----- Middleware -----
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -27,6 +27,9 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ----- Secrets -----
 SECRET_KEY = os.environ["SECRET_KEY"]  # No fallback in production
+SECURE_SSL_REDIRECT = True  # Force HTTPS
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
 
 # ----- Logging -----
 LOGGING = {
