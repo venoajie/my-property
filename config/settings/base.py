@@ -17,7 +17,7 @@ DEBUG = env.bool("DEBUG", False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ----- Security -----
-ALLOWED_HOSTS = ['*'] if DEBUG else env.list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*' if DEBUG else 'localhost'])
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() 
