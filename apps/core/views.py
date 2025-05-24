@@ -2,7 +2,17 @@
 from django.http import JsonResponse
 from django.db import connection
 from django.db.utils import OperationalError
+from django.views.decorators.http import require_GET
 
+@require_GET
+def rate_limit_exceeded(request, exception):
+    return JsonResponse(
+        {
+            "error": "rate_limit_exceeded",
+            "message": "Too many requests. Please try again later.",
+        },
+        status=429,
+    )
 def health_check(request):
     """Enhanced health check with DB verification"""
     try:

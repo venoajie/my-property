@@ -4,9 +4,10 @@ services:
     image: postgres:16
     container_name: db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-real_estate}
-      POSTGRES_USER: ${POSTGRES_USER:-appuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+      POSTGRES_DB: ${POSTGRES_DB} 
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # Reference env var
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -39,6 +40,9 @@ services:
     env_file:
       - .env
     environment:
+      DJANGO_SETTINGS_MODULE: config.settings.${DJANGO_ENV:-production}  # Environment-based config
+      STREAM_CHAT_API_KEY: ${STREAM_CHAT_API_KEY} 
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       POSTGRES_HOST: db
       PYTHONUNBUFFERED: 1
     ports:

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 # ----- Middleware -----
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "ratelimit.middleware.RatelimitMiddleware", 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware", 
@@ -80,3 +81,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+
+RATELIMIT_VIEW = "apps.core.views.rate_limit_exceeded"  # Custom view
+RATELIMIT_RATE = "5/m"  # Default rate: 5 requests/minute
+RATELIMIT_KEY = "user_or_ip"  # Use both authenticated users and IP
