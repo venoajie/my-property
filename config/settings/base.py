@@ -46,7 +46,7 @@ INSTALLED_APPS = [
 # ----- Middleware -----
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "ratelimit.middleware.RatelimitMiddleware", 
+    "django_ratelimit.middleware.RatelimitMiddleware", 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware", 
