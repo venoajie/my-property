@@ -49,12 +49,16 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 # ------------------------ Middleware -----------------------------
-MIDDLEWARE = [
+MIDDLEWARE =  [
+    # Security middleware first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",  # Added
+    "django.contrib.sessions.middleware.SessionMiddleware",  # Required for admin
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
-] + MIDDLEWARE[3:]  
+] + MIDDLEWARE[6:]  # Preserve remaining middleware  
 
 # ------------------------ Static Files ---------------------------
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
