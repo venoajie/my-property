@@ -5,7 +5,10 @@ from . import views
 app_name = "users"
 
 urlpatterns = [
-    # path("login/", views.LoginView.as_view(), name="login"),
-    # path("register/", views.RegisterView.as_view(), name="register"),
-    # Add other user-related endpoints here
+    # Authentication endpoints
+    path("login/", views.user_login, name="login"),
+    path("password-reset/", views.password_reset, name="password-reset"),
+    
+    # Add other endpoints:
+    # path("register/", views.user_register, name="register"),
 ]

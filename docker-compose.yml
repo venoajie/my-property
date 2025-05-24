@@ -21,6 +21,12 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - backend
+      
   # Database Migrations Service
   migrations:
     build: 

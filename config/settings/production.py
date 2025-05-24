@@ -62,8 +62,10 @@ LOGGING = {
 }
 
 
+# Rate limiting security
 RATELIMIT_RATE = "100/hour"  # Global default
 RATELIMIT_ENABLE = True  # Enable in production
+RATELIMIT_FAIL_OPEN = False  # Fail securely if Redis is down
 
 # Environment-specific overrides
 RATELIMIT_LOGIN_RATE = env("RATELIMIT_LOGIN_RATE", default="3/m")
