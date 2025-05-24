@@ -21,7 +21,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  
-    'ratelimit.middleware.RatelimitMiddleware',  
+    'django_ratelimit.middleware.RatelimitMiddleware',  
 ] + MIDDLEWARE[1:]  # Preserve base middleware except SecurityMiddleware
 
 # ----- Static Files -----
