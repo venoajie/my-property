@@ -26,10 +26,11 @@ WORKDIR /app
 COPY ./requirements/ /app/requirements/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir \
-    -r requirements/base.txt \
-    -r requirements/prod.txt && \
-    pip install --force-reinstall django-ratelimit==4.0.0 && \
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements/base.txt && \
+    pip install --no-cache-dir -r requirements/prod.txt && \
+    pip install --no-cache-dir --force-reinstall django-ratelimit==4.0.0 && \
+    python -c "import ratelimit; print(ratelimit.__version__)" && \
     pip check
 
 # Copy application code
