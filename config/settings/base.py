@@ -27,6 +27,9 @@ CSRF_TRUSTED_ORIGINS = [
 # ----- Database -----
 DATABASES = {"default": env.db("DATABASE_URL", default="postgresql:///myproperty")}
 
+TEST_RUNNER = "django.test.runner.DiscoverRunner"
+TEST_DISCOVER_PATTERN = "test_*.py"
+
 # ----- Applications -----
 INSTALLED_APPS = [
     "django.contrib.admin",
