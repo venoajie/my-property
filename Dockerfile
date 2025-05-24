@@ -24,10 +24,13 @@ RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
 WORKDIR /app
 
 # Install Python dependencies
-COPY requirements/ /app/requirements/
 RUN pip install --no-cache-dir \
     -r requirements/base.txt \
-    -r requirements/prod.txt
+    -r requirements/prod.txt && \
+     # Explicit reinstall
+    pip install --force-reinstall django-ratelimit==4.0.0 && \ 
+    # Verify all dependencies
+    pip check  
 
 # Copy application code
 COPY . .
