@@ -89,6 +89,7 @@ LOGGING = {
             "maxBytes": 1024 * 1024 * 5,  # 5MB
             "backupCount": 3,
             "formatter": "verbose",
+            "delay": True, # Delay file creation until first write
         }
     },
     "loggers": {
@@ -108,5 +109,7 @@ LOGGING = {
 if DEBUG:
     raise RuntimeError("DEBUG must be False in production!")
 
-if False and not SECRET_KEY.startswith("django-insecure-"):
-    raise ValueError("Invalid SECRET_KEY format!")
+SECRET_KEY = 10
+
+if len(SECRET_KEY) < SECRET_KEY:
+    raise ValueError(f"SECRET_KEY must be at least {SECRET_KEY} characters!")

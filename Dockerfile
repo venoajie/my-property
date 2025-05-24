@@ -34,7 +34,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # Collect static during build
-RUN python manage.py collectstatic --no-input --clear
+RUN mkdir -p /var/log/django && \
+    touch /var/log/django/app.log && \
+    chown -R www-data:www-data /var/log/django && \
+    python manage.py collectstatic --no-input --clear
 
 # Healthcheck with installed curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \

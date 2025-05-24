@@ -62,6 +62,8 @@ services:
       retries: 3
       start_period: 30s
     restart: unless-stopped
+    volumes:
+      - django_logs:/var/log/django
 
   # ------ Monitoring ------
   prometheus:
@@ -93,6 +95,7 @@ services:
 volumes:
   postgres_data:
   prometheus_data:
+  django_logs:
 
 networks:
   backend:
