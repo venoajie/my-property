@@ -13,20 +13,19 @@ class Command(BaseCommand):
         self.stdout.write("Waiting for database connection...")
         
         max_retries = 30  # 30 seconds max wait
-        retry_count = 0
-        
-        while retry_count < max_retries:
+        retry_delay = 1  # 1 second between retries
+
+        for attempt in range(1, max_retries + 1):
             try:
                 connections["default"].ensure_connection()
                 self.stdout.write(self.style.SUCCESS("Database available!"))
                 return
-            except OperationalError:
+            except OperationalError as e:
                 self.stdout.write(
-                    f"Attempt {retry_count + 1}/{max_retries}: "
-                    "Database unavailable, retrying in 1s..."
+                    f"Attempt {attempt}/{max_retries}: "
+                    f"Database unavailable ({str(e)}), retrying in {retry_delay}s..."
                 )
-                time.sleep(1)
-                retry_count += 1
+                time.sleep(retry_delay)
 
         self.stdout.write(self.style.ERROR("Database connection timed out!"))
-        raise TimeoutError("Could not connect to database after 30 attempts")
+        raise TimeoutError(f"Could not connect to database after {max_retries} attempts")
