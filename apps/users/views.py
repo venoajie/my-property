@@ -1,7 +1,7 @@
 # File: apps/users/views.py
 from django.contrib.auth import login
 from django.http import JsonResponse
-from ratelimit.decorators import ratelimit
+from django_ratelimit.decorators import ratelimit
 
 @require_POST
 @ratelimit(key="post:username", rate="3/m", method="POST")
