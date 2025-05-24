@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "apps.listings",  # Custom app
+    "core",
+    "listings",  
+    "users"",
 ]
 
 # ----- Middleware -----
