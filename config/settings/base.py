@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "core",
     "listings",  
-    "users"",
+    "users",
 ]
 
 # ----- Middleware -----
