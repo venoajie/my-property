@@ -20,8 +20,11 @@ RUN pip install --no-cache-dir \
     -r requirements/base.txt \
     -r requirements/prod.txt
 
+RUN python manage.py collectstatic --no-input
+
 # Application code
 COPY . .
+
 COPY .env* /app/
 
 # Runtime configuration
