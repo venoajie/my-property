@@ -11,14 +11,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 2s
+      timeout: 2s
+      retries: 3
     networks:
       - backend
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources: # PostgreSQL
+        limits:
+          cpus: '2.0'
+          memory: 3G
+        reservations:
+          memory: 1G
 
   # Web Application Service
   web:
@@ -39,6 +46,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     networks:
       - backend
     healthcheck:
@@ -53,11 +62,11 @@ services:
       - no-new-privileges:true
     deploy:
       resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-
-  # Monitoring Service
+        limits: # Django/React
+          cpus: '1.5'  # 1.5 cores max
+          memory: 2G   # Hard memory limit
+        reservations:
+          memory: 512M # Guaranteed minimuming Service
   prometheus:
     image: prom/prometheus:v2.47.0
     container_name: prometheus
@@ -71,6 +80,11 @@ services:
     restart: unless-stopped
     depends_on:
       - web
+    deploy:
+      resources: # Monitoring
+        limits:
+          cpus: '0.3'
+          memory: 512M
 
   # Reverse Proxy Service (HTTPS)
   nginx:
@@ -85,7 +99,11 @@ services:
       - web
     networks:
       - backend
-
+    deploy:
+      resources: # Reverse Proxy
+        limits:
+          cpus: '0.5'
+          memory: 256M
 volumes:
   postgres_data:
     driver: local
