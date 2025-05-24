@@ -1,7 +1,6 @@
 # Dockerfile
 # syntax=docker/dockerfile:1
 
-# Base Python image
 FROM python:3.12-bookworm
 
 # Environment configuration
@@ -23,14 +22,15 @@ RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
 # Application setup
 WORKDIR /app
 
+# Copy requirements first (for better layer caching)
+COPY ./requirements/ /app/requirements/
+
 # Install Python dependencies
 RUN pip install --no-cache-dir \
     -r requirements/base.txt \
     -r requirements/prod.txt && \
-     # Explicit reinstall
-    pip install --force-reinstall django-ratelimit==4.0.0 && \ 
-    # Verify all dependencies
-    pip check  
+    pip install --force-reinstall django-ratelimit==4.0.0 && \
+    pip check
 
 # Copy application code
 COPY . .
