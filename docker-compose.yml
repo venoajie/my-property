@@ -12,9 +12,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 2s
-      timeout: 2s
-      retries: 3
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - backend
     restart: unless-stopped
@@ -49,9 +49,10 @@ services:
       context: .
       dockerfile: Dockerfile
     command: >
-      sh -c "python manage.py wait_for_db &&
-             python manage.py collectstatic --no-input &&
-             gunicorn --bind 0.0.0.0:8000 config.wsgi:application"
+      sh -c "python manage.py wait_for_db --timeout 30 &&
+            python manage.py migrate &&
+            python manage.py collectstatic --no-input &&
+            gunicorn --bind 0.0.0.0:8000 config.wsgi:application --timeout 120 --workers 2"
     env_file:
       - .env
     environment:
@@ -59,6 +60,8 @@ services:
       STREAM_CHAT_API_KEY: ${STREAM_CHAT_API_KEY}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}  # Should use IAM roles in AWS
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      GUNICORN_TIMEOUT: 120
+      GUNICORN_WORKERS: 2
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:
@@ -73,6 +76,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
     volumes:
       - staticfiles:/app/staticfiles
 
