@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir \
 
 # Application code
 COPY . .
-COPY .env /app/
+COPY .env* /app/
 
 # Runtime configuration
 EXPOSE $PORT
