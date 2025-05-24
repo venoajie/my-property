@@ -29,6 +29,8 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:
+      migrations:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
     networks:
@@ -50,6 +52,23 @@ services:
       - .env
     environment:
       POSTGRES_HOST: db  # Use service name instead of localhost
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - backend
+
+  migrations:
+    build: .
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
     depends_on:
       db:
         condition: service_healthy
