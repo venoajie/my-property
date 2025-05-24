@@ -62,6 +62,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       GUNICORN_TIMEOUT: 120
       GUNICORN_WORKERS: 2
+      WAIT_FOR_DB_TIMEOUT: 30  # Optional: Can be used in command if needed
+      WAIT_FOR_DB_INTERVAL: 1
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:
