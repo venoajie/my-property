@@ -1,73 +1,112 @@
+# config/settings/production.py
+
 from .base import *
-import os
+import environ
 
-# ----- Core Overrides -----
-DEBUG = False  # Never enable in production
-CSRF_COOKIE_SECURE = True  # Only send CSRF cookie over HTTPS
-SESSION_COOKIE_SECURE = True  # Only send session cookie over HTTPS
+# Initialization
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")
 
-# ----- Host Configuration -----
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")  # Comma-separated list
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+# ------------------------ Core Security --------------------------
+DEBUG = False
+SECRET_KEY = env("SECRET_KEY")  # Must be set in environment
 
-# ----- Security Headers -----
-SECURE_HSTS_SECONDS = 31536000  # 1 year HSTS
+# ------------------------ Host Validation ------------------------
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS",
+    default=[
+        "130.61.246.120",  # HARDCODED: Replace with production domain
+        "localhost",
+        "127.0.0.1"
+    ]
+)
+
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS",
+    default=[
+        "https://130.61.246.120",  # HARDCODED: Use domain with HTTPS
+        "https://localhost"
+    ]
+)
+
+# ------------------------ HTTPS Enforcement ----------------------
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = True  # Redirect all HTTP to HTTPS
+
+# Secure cookies
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Strict"
+
+# ------------------------ Security Headers -----------------------
+SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
-SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
-# ----- Middleware -----
+# ------------------------ Middleware -----------------------------
 MIDDLEWARE = [
+    # Security-focused middleware first
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  
-    'django_ratelimit.middleware.RatelimitMiddleware',  
-] + MIDDLEWARE[1:]  # Preserve base middleware except SecurityMiddleware
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django_ratelimit.middleware.RatelimitMiddleware",
+] + MIDDLEWARE[3:]  # Preserve remaining base middleware
 
-# ----- Static Files -----
+# ------------------------ Static Files ---------------------------
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ----- Secrets -----
-SECRET_KEY = os.environ["SECRET_KEY"]  # No fallback in production
-SECURE_SSL_REDIRECT = True  # Force HTTPS
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = 'DENY'
+# ------------------------ Rate Limiting --------------------------
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = "default"  # Requires Redis configuration
+RATELIMIT_FAIL_OPEN = False  # Block requests if Redis down
 
-# ----- Logging -----
+# Rate configurations (set in .env)
+RATELIMIT_GLOBAL = env("RATELIMIT_GLOBAL", default="100/h")
+RATELIMIT_AUTH = env("RATELIMIT_AUTH", default="5/m")
+
+# ------------------------ Logging --------------------------------
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-    },
     "formatters": {
         "verbose": {
             "format": "{levelname} {asctime} {module} {message}",
             "style": "{",
         }
     },
-    "root": {
-        "handlers": ["console"],
-        "level": "WARNING",
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "/var/log/django/app.log",
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 3,
+            "formatter": "verbose",
+        }
     },
     "loggers": {
-        "django.request": {
-            "handlers": ["console"],
-            "level": "ERROR",
-            "propagate": False,
+        "django": {
+            "handlers": ["console", "file"],
+            "level": env("DJANGO_LOG_LEVEL", default="WARNING"),
         },
-    },
+        "django.security": {
+            "handlers": ["file"],
+            "level": "WARNING",
+            "propagate": False,
+        }
+    }
 }
 
+# ------------------------ Safety Checks --------------------------
+if DEBUG:
+    raise RuntimeError("DEBUG must be False in production!")
 
-# Rate limiting security
-RATELIMIT_RATE = "100/hour"  # Global default
-RATELIMIT_ENABLE = True  # Enable in production
-RATELIMIT_FAIL_OPEN = False  # Fail securely if Redis is down
-
-# Environment-specific overrides
-RATELIMIT_LOGIN_RATE = env("RATELIMIT_LOGIN_RATE", default="3/m")
-RATELIMIT_API_RATE = env("RATELIMIT_API_RATE", default="100/h")
+if not SECRET_KEY.startswith("django-insecure-"):
+    raise ValueError("Invalid SECRET_KEY format!")
