@@ -50,14 +50,15 @@ X_FRAME_OPTIONS = "DENY"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB"),
-        "USER": env("POSTGRES_USER"),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_HOST", default="postgres-db"),  # Matches compose service name
+        "NAME": env("POSTGRES_DB", default="dummy-db"),
+        "USER": env("POSTGRES_USER", default="dummy-user"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="dummy-password"),
+        "HOST": env("POSTGRES_HOST", default="localhost"),  # Matches compose service name
         "PORT": env("POSTGRES_PORT", default="5432"),
         "CONN_MAX_AGE": 600,  # Enable persistent connections
     }
 }
+
 
 # --- Middleware Configuration ---
 MIDDLEWARE = [
