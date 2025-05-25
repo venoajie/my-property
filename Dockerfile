@@ -7,6 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app:/app/apps:/app/config" \
     PORT=8000 \
     USER=appuser
+    
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
 
 # ----- System Setup -----
 RUN apt-get update && \

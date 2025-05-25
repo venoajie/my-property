@@ -1,80 +1,90 @@
+# config/settings/base.py
+"""
+Django base settings - inherited by environment-specific configurations
+"""
+
 from pathlib import Path
 import environ
-import os
 
-# ----- Path Configuration -----
+# --- Path Configuration ---
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
-# ----- Environment Setup -----
+# --- Environment Setup ---
 env = environ.Env()
-env.read_env(BASE_DIR / ".env")  # Load before other settings
+env.read_env(BASE_DIR / ".env")  # Load .env first
 
-# ----- Core Settings -----
+# --- Core Configuration ---
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG", False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ----- Security -----
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*' if DEBUG else 'localhost'])
+# --- Security Settings ---
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"] if DEBUG else ["localhost"])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip() 
-    for origin in env.list("CSRF_TRUSTED_ORIGINS", default=[])
-    if origin.startswith(('http://', 'https://'))
-]
-# ----- Database -----
-DATABASES = {"default": env.db("DATABASE_URL", default="postgresql:///myproperty")}
+# Security headers (enable in production)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
 
-TEST_RUNNER = "django.test.runner.DiscoverRunner"
-TEST_DISCOVER_PATTERN = "test_*.py"
-
-# ----- Applications -----
+# --- Application Definition ---
 INSTALLED_APPS = [
+    # Django core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'core.apps.CoreConfig',          # Explicit AppConfig
-    'listings.apps.ListingsConfig',  # Critical for management commands
-    'users.apps.UsersConfig',        # Explicit AppConfig
+    
+    # Project apps
+    "core.apps.CoreConfig",
+    "listings.apps.ListingsConfig",
+    "users.apps.UsersConfig",
 ]
 
-# ----- Middleware -----
+# --- Middleware ---
 MIDDLEWARE = [
+    # Security & infrastructure
     "django.middleware.security.SecurityMiddleware",
-    "django_ratelimit.middleware.RatelimitMiddleware", 
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    
+    # Core Django
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware", 
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    
+    # Security enhancements
+    "django_ratelimit.middleware.RatelimitMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# ----- Templates -----
+# --- Database ---
+DATABASES = {"default": env.db("DATABASE_URL", default="postgresql:///myproperty")}  # Hardcoded fallback
+
+# --- Templates ---
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
     "DIRS": [BASE_DIR / "templates"],
-    "APP_DIRS": True,  # Auto-discovery for app templates
+    "APP_DIRS": True,
     "OPTIONS": {
         "context_processors": [
             "django.template.context_processors.debug",
-            "django.template.context_processors.request",  # Required for admin
-            "django.contrib.auth.context_processors.auth",  # User context
-            "django.contrib.messages.context_processors.messages",  # Messages
+            "django.template.context_processors.request",
+            "django.contrib.auth.context_processors.auth",
+            "django.contrib.messages.context_processors.messages",
         ],
     },
 }]
 
-# ----- Static Files -----
+# --- Static Files ---
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"  # Production collection directory
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# ----- Authentication -----
+# --- Authentication ---
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -82,11 +92,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
-# ----- GDAL library ----- # currently irrelevant
-# GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
-# GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'
-
-RATELIMIT_VIEW = "apps.core.views.rate_limit_exceeded"  # Custom view
-RATELIMIT_RATE = "5/m"  # Default rate: 5 requests/minute
-RATELIMIT_KEY = "user_or_ip"  # Use both authenticated users and IP
+# --- Rate Limiting ---
+RATELIMIT_VIEW = "apps.core.views.rate_limit_exceeded"  # Hardcoded view path
+RATELIMIT_RATE = "5/m"  # Should be environment-configurable
+RATELIMIT_KEY = "user_or_ip"
