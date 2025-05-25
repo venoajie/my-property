@@ -42,12 +42,19 @@ DATABASES = {
 
 # ----- Middleware -----
 MIDDLEWARE = [
+    # Security first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    
+    # Core Django middleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    
+    # REQUIRED FOR ADMIN
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    
+    # Rate limiting
     "django_ratelimit.middleware.RatelimitMiddleware",
 ]
 
