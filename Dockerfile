@@ -17,8 +17,9 @@ RUN apt-get update && \
     binutils && \
     rm -rf /var/lib/apt/lists/*
 
-# Create log directory in builder stage
-RUN mkdir -p /var/log/django && \
+# Create user and directories first
+RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
+    mkdir -p /var/log/django && \
     chown -R appuser:appuser /var/log/django && \
     chmod 755 /var/log/django
 
@@ -32,9 +33,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements/ .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r base.txt -r prod.txt
-
-# Create application user in builder stage
-RUN useradd --uid 1001 --create-home --shell /bin/false appuser
 
 # Copy application code
 COPY . .
