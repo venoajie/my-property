@@ -1,6 +1,19 @@
 # ---- Builder Stage ----
 FROM python:3.12-slim-bookworm as builder
 
+
+# Add build arguments for critical secrets
+ARG SECRET_KEY
+ARG POSTGRES_PASSWORD
+
+# Set build-time environment variables
+ENV SECRET_KEY=$SECRET_KEY \
+    POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app:/app/apps:/app/config" \
+    DJANGO_SETTINGS_MODULE=config.settings.production
+
 # Build-specific environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -47,6 +60,10 @@ RUN python manage.py collectstatic --no-input --clear
 # ---- Runtime Stage ----
 FROM python:3.12-slim-bookworm as runtime
 
+# Unset build-time secrets
+ENV SECRET_KEY="" \
+    POSTGRES_PASSWORD=""
+    
 # Runtime environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

@@ -1,4 +1,6 @@
 .git
+# Allow .env for build context but exclude from final image
+!.env
 !.env
 *.sqlite3
 *.md

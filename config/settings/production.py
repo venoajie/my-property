@@ -125,6 +125,9 @@ def validate_production_settings():
     if DEBUG:
         raise ImproperlyConfigured("DEBUG must be False in production!")
 
+    if os.environ.get('IN_DOCKER_BUILD'):
+        return  # Skip secret validation during build
+
     if len(SECRET_KEY) < 50:
         raise ValueError("SECRET_KEY must be at least 50 characters")
 

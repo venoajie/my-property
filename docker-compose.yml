@@ -34,6 +34,9 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
+      args:
+        - SECRET_KEY=${SECRET_KEY}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     command: >
       sh -c "python manage.py wait_for_db --timeout 30 &&
             python manage.py migrate &&

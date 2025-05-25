@@ -6,14 +6,21 @@ Django base settings - inherited by environment-specific configurations
 from pathlib import Path
 import environ
 
+# --- Environment Setup ---
+env = environ.Env()
+env.read_env(BASE_DIR / ".env")  # Load .env first
+
+
+# --- Core Configuration with Fallbacks ---
+try:
+    SECRET_KEY = env("SECRET_KEY")
+except ImproperlyConfigured:
+    SECRET_KEY = 'dummy-key-for-build' if os.environ.get('IN_DOCKER_BUILD') else None
+
 # --- Path Configuration ---
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
-
-# --- Environment Setup ---
-env = environ.Env()
-env.read_env(BASE_DIR / ".env")  # Load .env first
 
 # --- Core Configuration ---
 SECRET_KEY = env("SECRET_KEY")
