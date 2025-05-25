@@ -1,8 +1,6 @@
 # my-property/docker-compose.yml
 # Service Architecture: [Database] ← [App] → [Cache] → [Monitoring] | [Proxy] → Internet
 
-version: '3.8'
-
 services:
   # --- CORE DATA SERVICES ---
   postgres-db:
