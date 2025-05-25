@@ -1,45 +1,54 @@
 # Dockerfile
-# Use lighter base image
+
+# ----- Base Image -----
 FROM python:3.12-slim-bookworm
 
-# Environment configuration
+# ----- Environment Configuration -----
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app/apps:/app/config" \
-    PORT=8000
+    PORT=8000 \
+    USER=appuser
 
-# System dependencies + curl for healthchecks
+# ----- System Setup -----
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libpq-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# SSL certificate setup
+# ----- Certificate Authority Setup -----
+# HARDCODED: Replace with organization CA in production
 COPY nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
 RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
 
-# Application setup
+# ----- Application Setup -----
 WORKDIR /app
 
-# Install dependencies first for caching
-COPY ./requirements /app/requirements/
+# ----- Dependency Management -----
+COPY requirements/ .
 RUN pip install --no-cache-dir --upgrade pip && \
-    -r requirements/base.txt && \
-    -r requirements/prod.txt
+    pip install --no-cache-dir \
+    -r base.txt \
+    -r prod.txt
 
-# Copy application
+# ----- Application Code -----
 COPY . .
 
-# Collect static during build
-RUN mkdir -p /var/log/django && \
-    touch /var/log/django/app.log && \
-    chown -R www-data:www-data /var/log/django && \
-    python manage.py collectstatic --no-input --clear
+# ----- Runtime Configuration -----
+RUN useradd --uid 1001 --create-home --shell /bin/false ${USER} && \
+    mkdir -p /var/log/django && \
+    chown -R ${USER}:${USER} /var/log/django && \
+    chmod 755 /var/log/django
 
-# Healthcheck with installed curl
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:$PORT/health/ || exit 1
+USER ${USER}
 
-EXPOSE $PORT
+# ----- Build Tasks -----
+RUN python manage.py collectstatic --no-input --clear
+
+# ----- Health Verification -----
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+EXPOSE ${PORT}
