@@ -1,5 +1,3 @@
-# Dockerfile
-
 # ----- Base Image -----
 FROM python:3.12-slim-bookworm
 
@@ -16,29 +14,20 @@ RUN apt-get update && \
     libpq-dev \
     curl \
     binutils  \
-    #libproj-dev \
-    #gdal-bin \
-    #libgdal-dev \
     python3-dev \
     gcc && \
     rm -rf /var/lib/apt/lists/*
 
-# GDAL library. Inactivated    
-# libproj-dev \ 
-# gdal-bin \
-# libgdal-dev \
-# libgdal30 \
+# ----- User and Directory Setup -----
+RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
+    mkdir -p /app/staticfiles /var/log/django && \
+    chown -R appuser:appuser /app/staticfiles /var/log/django && \
+    chmod 755 /app/staticfiles /var/log/django
 
 # ----- Certificate Authority Setup -----
-# HARDCODED: Replace with organization CA in production
 COPY nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
 RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
-
-
-RUN mkdir -p /app/staticfiles && \
-    chown -R appuser:appuser /app/staticfiles && \
-    chmod 755 /app/staticfiles
 
 # ----- Application Setup -----
 WORKDIR /app
@@ -53,16 +42,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ----- Application Code -----
 COPY . .
 
-# ----- Runtime Configuration -----
-RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
-    mkdir -p /var/log/django && \
-    chown -R appuser:appuser /var/log/django && \
-    chmod 755 /var/log/django
-
 USER ${USER}
-
-# ----- Build Tasks -----
-#RUN python manage.py collectstatic --no-input --clear # prevent 50 characters secret key problem
 
 # ----- Health Verification -----
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
