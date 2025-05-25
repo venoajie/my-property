@@ -122,6 +122,12 @@ LOGGING = {
     }
 }
 
+
+
+# ----- Add GDAL configuration -----
+GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
+GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'
+
 # ----- Safety Checks -----
 if DEBUG:
     raise RuntimeError("DEBUG must be False in production!")

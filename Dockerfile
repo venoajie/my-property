@@ -14,7 +14,11 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libpq-dev \
-    curl && \
+    curl \
+    binutils \
+    libproj-dev \
+    gdal-bin \
+    libgdal-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # ----- Certificate Authority Setup -----
