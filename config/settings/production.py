@@ -90,5 +90,5 @@ if any(origin.startswith("http://") and not origin.startswith(("http://localhost
 
 # ----- AWS Configuration -----
 # HARDCODED: Set AWS_S3_REGION_NAME in environment
-AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
-AWS_QUERYSTRING_AUTH = False
+#AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
+#AWS_QUERYSTRING_AUTH = False
