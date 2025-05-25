@@ -34,6 +34,9 @@ services:
       - backend
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+    backend:
+      driver: bridge
+      internal: true  # <--- Prevent external access to DB/Redis
     restart: always
 
   # ----- Application Server -----
@@ -90,6 +93,7 @@ services:
     depends_on:
       - web
     networks:
+      - frontend
       - backend
     restart: unless-stopped
 

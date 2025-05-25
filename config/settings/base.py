@@ -83,6 +83,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# ----- GDAL library ----- # currently irrelevant
+# GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
+# GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'
+
 RATELIMIT_VIEW = "apps.core.views.rate_limit_exceeded"  # Custom view
 RATELIMIT_RATE = "5/m"  # Default rate: 5 requests/minute
 RATELIMIT_KEY = "user_or_ip"  # Use both authenticated users and IP

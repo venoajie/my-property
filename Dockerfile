@@ -15,11 +15,19 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libpq-dev \
     curl \
-    binutils \
-    libproj-dev \
-    gdal-bin \
-    libgdal-dev && \
+    binutils  \
+    #libproj-dev \
+    #gdal-bin \
+    #libgdal-dev \
+    python3-dev \
+    gcc && \
     rm -rf /var/lib/apt/lists/*
+
+# GDAL library. Inactivated    
+# libproj-dev \ 
+# gdal-bin \
+# libgdal-dev \
+# libgdal30 \
 
 # ----- Certificate Authority Setup -----
 # HARDCODED: Replace with organization CA in production

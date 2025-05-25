@@ -23,6 +23,6 @@ urlpatterns = [
     path("api/auth/", include("apps.users.urls")),
     path("api/listings/", include("apps.listings.urls")),
 
-    # API monitorint
-    path('metrics', prometheus_views.ExportToReadableView()),
+    # API monitoring--GDAL library.irrelevant at this moment
+    #path('metrics', prometheus_views.ExportToReadableView()),
 ]

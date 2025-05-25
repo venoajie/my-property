@@ -67,7 +67,8 @@ MIDDLEWARE = [
 # ----- Database Configuration -----
 DATABASES = {
     'default': {
-        'ENGINE': 'django_prometheus.db.backends.postgresql',  # Instrumented DB
+        #'ENGINE': 'django_prometheus.db.backends.postgresql',  # Relevant if GDAL activated
+        'ENGINE': 'django.db.backends.postgresql',  # Non-GDAL
         'NAME': env("POSTGRES_DB"),
         'USER': env("POSTGRES_USER"),
         'PASSWORD': env("POSTGRES_PASSWORD"),
@@ -123,8 +124,18 @@ LOGGING = {
 }
 
 
+# ----- Security Validation -----
+if any(origin.startswith('http://') for origin in CSRF_TRUSTED_ORIGINS):
+    raise ImproperlyConfigured(
+        "Insecure origin in CSRF_TRUSTED_ORIGINS! Use HTTPS"
+    )
 
-# ----- Add GDAL configuration -----
+
+# ----- AWS S3 Configuration -----
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="ap-southeast-1")  # <--- HARDCODED DEFAULT
+AWS_QUERYSTRING_AUTH = False  # Don't add auth params to S3 URLs
+
+# ----- Add GDAL configuration for Redis-----
 GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
 GEOS_LIBRARY_PATH = '/usr/lib/libgeos_c.so'
 
