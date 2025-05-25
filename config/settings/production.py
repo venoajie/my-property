@@ -83,8 +83,10 @@ if DEBUG:
 if len(SECRET_KEY) < 50:
     raise ValueError("SECRET_KEY must be at least 50 characters")
 
-if any(origin.startswith("http://") for origin in CSRF_TRUSTED_ORIGINS):
-    raise ImproperlyConfigured("Insecure origin in CSRF_TRUSTED_ORIGINS - use HTTPS")
+# Update CSRF validation to allow HTTP for local development
+if any(origin.startswith("http://") and not origin.startswith(("http://localhost", "http://127.0.0.1")) for origin in CSRF_TRUSTED_ORIGINS):
+    raise ImproperlyConfigured("Insecure origin in CSRF_TRUSTED_ORIGINS - Use HTTPS for production domains")
+
 
 # ----- AWS Configuration -----
 # HARDCODED: Set AWS_S3_REGION_NAME in environment
