@@ -16,10 +16,13 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     
     # System endpoints
-    path("health/", health_check, name="health-check"),
+    path("health", health_check, name="health-check"),
     path("", home, name="home"),
     
     # API endpoints
     path("api/auth/", include("apps.users.urls")),
     path("api/listings/", include("apps.listings.urls")),
+
+    # API monitorint
+    path('metrics', prometheus_views.ExportToReadableView()),
 ]

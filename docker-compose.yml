@@ -54,7 +54,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-
+    expose:  # Add this section
+      - "8000"      
+      
   prometheus:
     image: prom/prometheus:v2.47.0
     ports:
@@ -64,8 +66,11 @@ services:
       - prometheus_data:/prometheus
     networks:
       - backend
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
     restart: unless-stopped
-
+    
   nginx:
     image: nginx:1.25-alpine
     ports:

@@ -1,4 +1,107 @@
-# my-property
+# Real Estate Platform Deployment Guide
+
+## Prerequisites
+- Docker 20.10+
+- Docker Compose 2.20+
+- OpenSSL (for certificate generation)
+- Git 2.25+
+
+## First-Time Setup
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/yourusername/real-estate-platform.git
+cd real-estate-platform
+
+Initialize Project Structure
+make setup  # Creates required directories and generates DH parameters
+
+Environment Configuration
+cp .env.example .env
+nano .env  # Edit with your values
+
+Minimum Required Variables:
+# Database
+POSTGRES_DB=real_estate
+POSTGRES_USER=app_user
+POSTGRES_PASSWORD=strong_password
+
+# Django
+SECRET_KEY=$(python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+DEBUG=0
+ALLOWED_HOSTS=130.61.246.120,localhost
+
+# AWS (for media storage)
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_STORAGE_BUCKET_NAME=your-bucket
+
+Generate SSL Certificates (Development)
+make generate-ssl
+
+Security Essentials
+SSL Certificates (Production):
+certbot certonly --standalone -d yourdomain.com
+
+File Permissions:
+chmod 600 nginx/ssl/*
+chown -R 101:101 nginx/logs  # For Docker Nginx user
+
+Firewall Rules:
+sudo ufw allow 443/tcp
+sudo ufw deny 80/tcp
+
+Building & Running
+
+# Start all services
+make up
+
+# View logs
+make logs
+
+# Check system health
+make health
+
+First-Time Deployment
+Apply database migrations:
+
+bash
+docker compose exec web python manage.py migrate
+Create superuser:
+
+bash
+docker compose exec web python manage.py createsuperuser
+Verify services:
+
+bash
+curl https://130.61.246.120/health
+Maintenance
+Daily Operations
+bash
+# Backup database
+make backup
+
+# Renew certificates (production)
+make renew-certs
+
+# Update dependencies
+make update
+Troubleshooting
+Issue	Solution
+Docker permission denied	sudo usermod -aG docker $USER
+Missing environment variables	make env && source .env
+Nginx SSL errors	make generate-ssl
+Database connection issues	make reset-db
+Production Readiness Checklist
+Replace self-signed certificates with Let's Encrypt
+
+Implement monitoring (Prometheus/Grafana)
+
+Set up daily database backups
+
+Configure AWS S3 for media storage
+
+Enable Cloudflare/CDN protection
 
 folder structure:
 .

@@ -26,8 +26,7 @@ WORKDIR /app
 # Install dependencies first for caching
 COPY ./requirements /app/requirements/
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
-    -r requirements/base.txt \
+    -r requirements/base.txt && \
     -r requirements/prod.txt
 
 # Copy application
