@@ -80,9 +80,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 RUN chown -R appuser:appuser /app
 
+
 # Static File Collection (Run as non-root)
 USER appuser
-RUN python manage.py collectstatic --no-input --clear
+RUN python manage.py check --database default && \
+    python manage.py collectstatic --no-input --clear
 
 # ---- Runtime Stage ----
 # Purpose: Minimal production image
@@ -122,12 +124,17 @@ RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
 
 # Application Setup
 WORKDIR /app
+# Update the COPY command in Dockerfile
 COPY --from=builder --chown=appuser:appuser \
-    /opt/venv /opt/venv \
-    /app /app \
+    /opt/venv /opt/venv
+
+COPY --from=builder --chown=appuser:appuser \
+    /app/ /app/
+
+COPY --from=builder --chown=appuser:appuser \
     /var/log/django /var/log/django
 
-# Virtual Environment
+    # Virtual Environment
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Healthcheck & Ports
