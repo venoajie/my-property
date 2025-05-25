@@ -6,7 +6,7 @@ FROM python:3.12-slim-bookworm
 # ----- Environment Configuration -----
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH="/app/apps:/app/config" \
+    PYTHONPATH="/app:/app/apps:/app/config" \
     PORT=8000 \
     USER=appuser
 
