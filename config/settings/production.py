@@ -50,12 +50,16 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    
-    # REQUIRED FOR ADMIN
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    
+    # REQUIRED FOR ADMIN (ADD THIS LINE)
+    "django.contrib.messages.middleware.MessageMiddleware",
     
     # Rate limiting
     "django_ratelimit.middleware.RatelimitMiddleware",
+    
+    # Security headers
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 # ----- Rate Limiting -----
