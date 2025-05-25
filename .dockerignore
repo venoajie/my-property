@@ -6,6 +6,7 @@
 *.md
 Dockerfile
 docker-compose.yml
+docker-compose.*.yml
 staticfiles/*
 !staticfiles/.gitkeep
 **/__pycache__
@@ -18,3 +19,5 @@ staticfiles/*
 .gitignore
 .venv
 .env.local
+*.log
+node_modules

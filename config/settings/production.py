@@ -43,7 +43,9 @@ CSRF_COOKIE_SECURE = True
 
 # Security Headers
 SECURE_HSTS_SECONDS = 31536000  # 1 year - HARDCODED for maximum security
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_PRELOAD = True
 X_FRAME_OPTIONS = "DENY"
 
 # --- Database Configuration ---
@@ -68,7 +70,9 @@ MIDDLEWARE = [
     
     # Core Django middleware
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
+    "django.middleware.common.CommonMiddleware"
+    "django.middleware.common.BrokenLinkEmailsMiddleware",
+    "apps.core.middleware.BlockGitAccessMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",  # Required for admin

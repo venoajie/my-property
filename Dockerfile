@@ -6,7 +6,7 @@
 # ---- Builder Stage ----
 # Purpose: Install dependencies, build static files
 # Security: Contains build tools that are not in final image
-FROM python:3.12-slim-bookworm as builder
+FROM python:3.12-slim-bookworm AS builder
 
 
 # Add build arguments with safe defaults
@@ -83,7 +83,7 @@ RUN chown -R appuser:appuser /app
 
 # Static File Collection (Run as non-root)
 USER appuser
-RUN python manage.py collectstatic --no-input --clear
+RUN python manage.py collectstatic --no-input --clear --settings=config.settings.build
 
 # ---- Runtime Stage ----
 # Purpose: Minimal production image
@@ -135,7 +135,7 @@ COPY --from=builder --chown=appuser:appuser \
 
 COPY --from=builder --chown=appuser:appuser \
     /app/staticfiles /app/staticfiles
-    
+
     # Virtual Environment
 ENV PATH="/opt/venv/bin:$PATH"
 
