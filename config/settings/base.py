@@ -4,40 +4,43 @@ Django base settings - inherited by environment-specific configurations
 """
 
 from pathlib import Path
+import os
 import environ
+from django.core.exceptions import ImproperlyConfigured
+
+# --- Path Configuration ---
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # project_root/config/settings/../../..
 
 # --- Environment Setup ---
 env = environ.Env()
-env.read_env(BASE_DIR / ".env")  # Load .env first
+try:
+    env.read_env(BASE_DIR / ".env")  # Load .env first
+except FileNotFoundError:
+    pass  # Allow environment variables from other sources
 
-
-# --- Core Configuration with Fallbacks ---
+# --- Core Configuration with Build Safety ---
 try:
     SECRET_KEY = env("SECRET_KEY")
 except ImproperlyConfigured:
     SECRET_KEY = 'dummy-key-for-build' if os.environ.get('IN_DOCKER_BUILD') else None
 
-# --- Path Configuration ---
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# --- Core Settings ---
+DEBUG = env.bool("DEBUG", False)
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
-
-# --- Core Configuration ---
-SECRET_KEY = env("SECRET_KEY")
-DEBUG = env.bool("DEBUG", False)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Security Settings ---
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"] if DEBUG else ["localhost"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"] if DEBUG else [])
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
-# Security headers (enable in production)
+# Security headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
 # --- Application Definition ---
 INSTALLED_APPS = [
-    # Django core
+    # Core Django apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -51,7 +54,7 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
 ]
 
-# --- Middleware ---
+# --- Middleware Stack ---
 MIDDLEWARE = [
     # Security & infrastructure
     "django.middleware.security.SecurityMiddleware",
@@ -65,14 +68,19 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     
     # Security enhancements
-    "django_ratelimit.middleware.RatelimitMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_ratelimit.middleware.RatelimitMiddleware",
 ]
 
-# --- Database ---
-DATABASES = {"default": env.db("DATABASE_URL", default="postgresql:///myproperty")}  # Hardcoded fallback
+# --- Database Configuration ---
+DATABASES = {
+    "default": env.db(
+        "DATABASE_URL",
+        default="postgresql:///myproperty?connect_timeout=10"
+    )
+}
 
-# --- Templates ---
+# --- Template Configuration ---
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
     "DIRS": [BASE_DIR / "templates"],
@@ -84,12 +92,14 @@ TEMPLATES = [{
             "django.contrib.auth.context_processors.auth",
             "django.contrib.messages.context_processors.messages",
         ],
+        "debug": env.bool("TEMPLATE_DEBUG", False),
     },
 }]
 
-# --- Static Files ---
+# --- Static Files Configuration ---
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- Authentication ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -100,6 +110,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- Rate Limiting ---
-RATELIMIT_VIEW = "apps.core.views.rate_limit_exceeded"  # Hardcoded view path
-RATELIMIT_RATE = "5/m"  # Should be environment-configurable
-RATELIMIT_KEY = "user_or_ip"
+RATELIMIT_VIEW = "core.views.rate_limit_exceeded"
+RATELIMIT_RATE = env("RATELIMIT_RATE", default="100/m")
+RATELIMIT_KEY = "header:x-forwarded-for" if not DEBUG else "ip"
