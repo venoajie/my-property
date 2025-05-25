@@ -17,6 +17,11 @@ RUN apt-get update && \
     binutils && \
     rm -rf /var/lib/apt/lists/*
 
+# Create log directory in builder stage
+RUN mkdir -p /var/log/django && \
+    chown -R appuser:appuser /var/log/django && \
+    chmod 755 /var/log/django
+
 WORKDIR /app
 
 # Create virtual environment
@@ -28,10 +33,17 @@ COPY requirements/ .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r base.txt -r prod.txt
 
+# Create application user in builder stage
+RUN useradd --uid 1001 --create-home --shell /bin/false appuser
+
 # Copy application code
 COPY . .
 
-# Collect static files during build
+# Set ownership before collectstatic
+RUN chown -R appuser:appuser /app
+
+# Run collectstatic as appuser
+USER appuser
 RUN python manage.py collectstatic --no-input --clear
 
 # ---- Runtime Stage ----
@@ -68,6 +80,7 @@ WORKDIR /app
 # Copy from builder stage
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app /app
+COPY --from=builder /var/log/django /var/log/django
 
 # Set virtual environment path
 ENV PATH="/opt/venv/bin:$PATH"

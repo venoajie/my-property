@@ -98,7 +98,21 @@ if len(SECRET_KEY) < 50:
 if any(origin.startswith("http://") and not origin.startswith(("http://localhost", "http://127.0.0.1")) for origin in CSRF_TRUSTED_ORIGINS):
     raise ImproperlyConfigured("Insecure origin in CSRF_TRUSTED_ORIGINS - Use HTTPS for production domains")
 
+# Ensure log directory exists
+LOG_DIR = os.path.join('/', 'var', 'log', 'django')
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
 
+LOGGING = {
+    # ... your existing logging config ...
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            # ... rest of config ...
+        },
+    },}
 # ----- AWS Configuration -----
 # HARDCODED: Set AWS_S3_REGION_NAME in environment
 #AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
