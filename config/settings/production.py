@@ -168,4 +168,5 @@ def validate_production_settings() -> None:
     insecure_origins = [
         origin for origin in CSRF_TRUSTED_ORIGINS
         if origin.startswith("http://") 
-        and
+        and not origin.startswith(("http://localhost", "http://127.0.0.1"))
+]
