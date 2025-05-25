@@ -13,13 +13,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--timeout", 
             type=int,
-            default=30,  # HARDCODED: Set via .env if needed
+            default=60,  # HARDCODED: Set via .env if needed
             help="Maximum wait seconds (default: %(default)s)"
         )
         parser.add_argument(
             "--interval",
             type=int,
-            default=2,
+            default=3,
             help="Retry interval in seconds (default: %(default)s)"
         )
 

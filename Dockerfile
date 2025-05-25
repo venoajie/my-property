@@ -35,6 +35,11 @@ COPY nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
 RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
 
+
+RUN mkdir -p /app/staticfiles && \
+    chown -R appuser:appuser /app/staticfiles && \
+    chmod 755 /app/staticfiles
+
 # ----- Application Setup -----
 WORKDIR /app
 

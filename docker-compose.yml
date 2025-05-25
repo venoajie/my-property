@@ -15,10 +15,10 @@ services:
       - backend
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
   redis-cache:
     image: redis:7-alpine
     command: redis-server --requirepass ${REDIS_PASSWORD}
@@ -37,7 +37,7 @@ services:
     command: >
       sh -c "python manage.py wait_for_db --timeout 30 &&
             python manage.py migrate &&
-            python manage.py collectstatic --no-input &&
+            python manage.py collectstatic --no-input --clear &&
             gunicorn --bind 0.0.0.0:8000 config.wsgi:application"
     env_file: .env
     depends_on:
