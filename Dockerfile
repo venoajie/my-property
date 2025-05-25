@@ -83,8 +83,7 @@ RUN chown -R appuser:appuser /app
 
 # Static File Collection (Run as non-root)
 USER appuser
-RUN python manage.py check --database default && \
-    python manage.py collectstatic --no-input --clear
+RUN python manage.py collectstatic --no-input --clear
 
 # ---- Runtime Stage ----
 # Purpose: Minimal production image
@@ -134,6 +133,9 @@ COPY --from=builder --chown=appuser:appuser \
 COPY --from=builder --chown=appuser:appuser \
     /var/log/django /var/log/django
 
+COPY --from=builder --chown=appuser:appuser \
+    /app/staticfiles /app/staticfiles
+    
     # Virtual Environment
 ENV PATH="/opt/venv/bin:$PATH"
 
