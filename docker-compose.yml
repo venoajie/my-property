@@ -15,9 +15,9 @@ services:
       - backend
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      interval: 2s
+      timeout: 2s
+      retries: 15
 
   redis-cache:
     image: redis:7-alpine
@@ -38,7 +38,7 @@ services:
         - SECRET_KEY=${SECRET_KEY}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     command: >
-      sh -c "python manage.py wait_for_db --timeout 30 &&
+      sh -c "python manage.py wait_for_db --timeout 60 --interval 5 &&
             python manage.py migrate &&
             python manage.py check --deploy &&
             gunicorn --bind 0.0.0.0:8000 config.wsgi:application"

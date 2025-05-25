@@ -56,14 +56,13 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
 # --- Database Configuration ---
-# HARDCODED: Replace defaults with environment variables in production
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", default="dummy-db"),
-        "USER": env("POSTGRES_USER", default="dummy-user"),
-        "PASSWORD": env("POSTGRES_PASSWORD", default="dummy-password"),
-        "HOST": env("POSTGRES_HOST", default="postgres-db"),  # Matches compose service name
+        "NAME": env("POSTGRES_DB"),
+        "USER": env("POSTGRES_USER"),
+        "PASSWORD": env("POSTGRES_PASSWORD"),
+        "HOST": env("POSTGRES_HOST"),  # Matches compose service name
         "PORT": env("POSTGRES_PORT", default="5432"),
         "CONN_MAX_AGE": 600,  # Connection persistence
         "OPTIONS": {
