@@ -126,7 +126,6 @@ LOGGING = {
 if DEBUG:
     raise RuntimeError("DEBUG must be False in production!")
 
-if len(SECRET_KEY) < SECURITY_DEFAULTS["SECRET_MIN_LENGTH"]:
-    raise ValueError(
-        f"SECRET_KEY must be at least {SECURITY_DEFAULTS['SECRET_MIN_LENGTH']} characters!"
-    )
+
+if len(SECRET_KEY) < 50:
+    raise ValueError("SECRET_KEY must be at least 50 characters!")

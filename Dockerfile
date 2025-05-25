@@ -37,15 +37,15 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # ----- Runtime Configuration -----
-RUN useradd --uid 1001 --create-home --shell /bin/false ${USER} && \
+RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
     mkdir -p /var/log/django && \
-    chown -R ${USER}:${USER} /var/log/django && \
+    chown -R appuser:appuser /var/log/django && \
     chmod 755 /var/log/django
 
 USER ${USER}
 
 # ----- Build Tasks -----
-RUN python manage.py collectstatic --no-input --clear
+#RUN python manage.py collectstatic --no-input --clear # prevent 50 characters secret key problem
 
 # ----- Health Verification -----
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
