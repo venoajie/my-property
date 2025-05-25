@@ -42,6 +42,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ----- Application Code -----
 COPY . .
 
+# Change ownership BEFORE switching user
+RUN chown -R appuser:appuser /app
+
+# Then switch user
 USER ${USER}
 
 # ----- Health Verification -----

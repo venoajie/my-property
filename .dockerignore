@@ -9,3 +9,5 @@ venv
 *.md
 Dockerfile
 docker-compose.yml
+staticfiles/*
+!staticfiles/.gitkeep
