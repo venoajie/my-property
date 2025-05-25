@@ -62,11 +62,15 @@ DATABASES = {
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_HOST"),  # Matches compose service name
+        "HOST": env("POSTGRES_HOST", default="postgres-db"),  # Matches compose service name
         "PORT": env("POSTGRES_PORT", default="5432"),
         "CONN_MAX_AGE": 600,  # Connection persistence
         "OPTIONS": {
-            "sslmode": "require",  # Enforce SSL connections
+            "sslmode": "disable",  # require: Enforce SSL connections
+            # Disable SSL for development
+            # For production use:
+            # "sslmode": "verify-full",
+            # "sslrootcert": "/path/to/ca-certificate.crt",
             "connect_timeout": 5,  # 5 second connection timeout
         },
     }

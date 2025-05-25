@@ -11,6 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # HARDCODED: Use Docker secrets in production
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/ssl:/ssl:ro  # For production SSL certs
     networks:
       - backend
     healthcheck:
@@ -18,6 +19,11 @@ services:
       interval: 2s
       timeout: 2s
       retries: 15
+    command: >
+      -c ssl=on  # Enable SSL
+      -c ssl_cert_file=/ssl/server.crt
+      -c ssl_key_file=/ssl/server.key
+      -c ssl_ca_file=/ssl/ca.crt
 
   redis-cache:
     image: redis:7-alpine
