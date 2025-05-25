@@ -67,7 +67,61 @@ LOGGING = {
             "maxBytes": 5 * 1024 * 1024,  # 5MB
             "backupCount": 3,
         },
-    },
+    },# config/settings/production.py
+from django.core.exceptions import ImproperlyConfigured
+from .base import *
+import environ
+import os
+
+# ----- Initialization -----
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")  # Load from project root
+
+# ----- Core Configuration -----
+DEBUG = env.bool("DEBUG", False)
+SECRET_KEY = env("SECRET_KEY")  # Set in .env (50+ chars)
+
+# ----- Security Headers -----
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
+    "http://localhost:8000", 
+    "http://127.0.0.1:8000"  # HARDCODED: Replace with production domains
+])
+
+# ----- Security Validation -----
+if any(origin.startswith("http://") and not origin.startswith(("http://localhost", "http://127.0.0.1")) 
+    for origin in CSRF_TRUSTED_ORIGINS
+):
+    raise ImproperlyConfigured("Production domains must use HTTPS")
+
+if len(SECRET_KEY) < 50:
+    raise ValueError("SECRET_KEY must be ≥50 characters")
+
+# ----- Database -----
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB"),
+        "USER": env("POSTGRES_USER"),
+        "PASSWORD": env("POSTGRES_PASSWORD"),
+        "HOST": env("POSTGRES_HOST", default="db"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
+    }
+}
+
+# ----- Middleware -----
+MIDDLEWARE = [
+    # Security first
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # Core Django
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Rate limiting
+    "django_ratelimit.middleware.RatelimitMiddleware",
+]
     "loggers": {
         "django": {
             "handlers": ["console", "file"],
@@ -84,9 +138,9 @@ if len(SECRET_KEY) < 50:
     raise ValueError("SECRET_KEY must be at least 50 characters")
 
 # Update CSRF validation to allow HTTP for local development
-if any(origin.startswith("http://") and not origin.startswith(("http://localhost", "http://127.0.0.1")) for origin in CSRF_TRUSTED_ORIGINS):
-    raise ImproperlyConfigured("Insecure origin in CSRF_TRUSTED_ORIGINS - Use HTTPS for production domains")
-
+if any(origin.startswith("http://") and not origin.startswith(("http://localhost", "http://127.0.0.1")) 
+    for origin in CSRF_TRUSTED_ORIGINS):
+    raise ImproperlyConfigured("Production domains must use HTTPS")
 
 # ----- AWS Configuration -----
 # HARDCODED: Set AWS_S3_REGION_NAME in environment
