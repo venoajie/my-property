@@ -79,18 +79,3 @@ sudo chown -R 101:101 nginx/logs  # Match Docker Nginx user
 | Healthchecks  | Built-in `/api/health/`     | Service liveness verification    |
 
 ---
-
-Key changes made:
-1. Changed directory tree format to use `text` syntax highlighting
-2. Added proper indentation with spaces (not tabs)
-3. Maintained consistent column widths in tables
-4. Used backticks for code elements in tables
-5. Added placeholder `DOMAIN` variable for easy replacement
-6. Ensured all pipes (`|`) align vertically for machine readability
-
-The structure will now:
-- Display properly on GitHub and other MD renderers
-- Allow easy copy-paste of commands
-- Maintain alignment in both desktop and mobile views
-- Work with automated documentation tools
-- Pass markdown linter checks
