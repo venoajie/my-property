@@ -21,21 +21,27 @@ DB_DIR := postgres/data# Database volume
 # --------------------------
 
 ## Initialize project structure with secure permissions
-setup:
-	@echo "🔧 Building secure directory structure..."
+setup:@echo "🔧 Building secure directory structure..."
 	sudo mkdir -p "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
 	sudo chown -R $$(whoami):$$(whoami) "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
-	
-	@echo "📝 Creating log files..."
-	sudo touch "${LOG_DIR}/access.log" "${LOG_DIR}/error.log"
-	sudo chmod 644 "${LOG_DIR}"/*.log
-	
+	sudo chmod 755 "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"  # Base permissions
+
 	@echo "🔐 Applying cryptographic protections..."
 	sudo openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
-	
-	@echo "📁 Setting strict filesystem permissions..."
+
+	@echo "📁 Configuring service-specific permissions..."
+	# Prepare logs for NGINX (UID 101)
+	sudo chown -R 101:101 "${LOG_DIR}"
+	sudo chmod 755 "${LOG_DIR}"
+	sudo chcon -Rt httpd_log_t "${LOG_DIR}"  # SELinux
+
+	# Secure SSL directory
 	sudo chmod 700 "${SSL_DIR}"
-	sudo chcon -Rt httpd_log_t "${LOG_DIR}"  # SELinux context
+	sudo chown -R root:root "${SSL_DIR}"
+
+	# Configure DB directory for PostgreSQL (UID 999)
+	sudo chown -R 999:999 "${DB_DIR}"
+	sudo chmod 750 "${DB_DIR}"
 
 ## Start all services in production mode
 up:
