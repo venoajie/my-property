@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}            # .env: Database name
       POSTGRES_USER: ${POSTGRES_USER}        # .env: Database user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # HARDCODED: Use Docker secrets in production
+      LANG: en_US.utf8  
+      LC_ALL: en_US.utf8 
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/ssl:/ssl:ro  # For production SSL certs
@@ -19,7 +21,7 @@ services:
       interval: 2s
       timeout: 2s
       retries: 15
-    command: >
+    command: >-
       -c ssl=on  # Enable SSL
       -c ssl_cert_file=/ssl/server.crt
       -c ssl_key_file=/ssl/server.key
