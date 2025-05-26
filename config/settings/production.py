@@ -80,6 +80,7 @@ DATABASES = {
 # Order is critical: Security first, utilities next, features last
 MIDDLEWARE = [
     # Security & Infrastructure
+    "apps.core.middleware.BlockGitAccessMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     
@@ -93,7 +94,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     
     # Security Enhancements
-    "apps.core.middleware.BlockGitAccessMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
     
