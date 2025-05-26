@@ -25,22 +25,19 @@ setup:@echo "🔧 Building secure directory structure..."
 	@echo "🔧 Building secure directory structure..."
 	sudo mkdir -p "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
 	sudo chown -R $$(whoami):$$(whoami) "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
-	sudo chmod 755 "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"  # Base permissions
-
+	sudo chmod 755 "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
+	
 	@echo "🔐 Applying cryptographic protections..."
 	sudo openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
-
+	
 	@echo "📁 Configuring service-specific permissions..."
-	# Prepare logs for NGINX (UID 101)
 	sudo chown -R 101:101 "${LOG_DIR}"
 	sudo chmod 755 "${LOG_DIR}"
-	sudo chcon -Rt httpd_log_t "${LOG_DIR}"  # SELinux
-
-	# Secure SSL directory
+	sudo chcon -Rt httpd_log_t "${LOG_DIR}"
+	
 	sudo chmod 700 "${SSL_DIR}"
 	sudo chown -R root:root "${SSL_DIR}"
-
-	# Configure DB directory for PostgreSQL (UID 999)
+	
 	sudo chown -R 999:999 "${DB_DIR}"
 	sudo chmod 750 "${DB_DIR}"
 
