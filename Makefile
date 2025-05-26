@@ -1,103 +1,38 @@
 # File: Makefile
-# Purpose: Infrastructure automation for secure real estate platform deployment
-# Security Level: Production (with development safeguards)
+# Path: my-property/Makefile
+# Purpose: Safe deployment automation with dependency checks
 
-# --------------------------
-# 1. Environment Configuration
-# --------------------------
-DOMAIN ?= localhost# Override with production domain
-COMPOSE := docker compose# Docker Compose command abstraction
-DB_SERVICE := db# Database service name
-WEB_SERVICE := web# Django service name
-NGINX_SERVICE := nginx# Web server service name
-SSL_DIR := nginx/ssl# Certificate storage
-LOG_DIR := nginx/logs# Access/error logs
-DB_DIR := postgres/data# Database volume
+.PHONY: validate init up logs health migrate clean
 
-.PHONY: setup up logs health backup renew-certs update migrate security-check
+# ---- Environment Validation ----
+validate:
+	@test -f .env || (echo "ERROR: Missing .env file"; exit 1)
+	@test -f secrets/db_password.txt || (echo "ERROR: Missing DB secret"; exit 1)
+	@test -f secrets/redis_password.txt || (echo "ERROR: Missing Redis secret"; exit 1)
 
-# --------------------------
-# 2. Core Workflow Targets
-# --------------------------
+# ---- Core Workflow ----
+init: validate
+	@echo "🔐 Generating crypto material..."
+	@mkdir -p nginx/ssl
+	@openssl dhparam -out nginx/ssl/dhparam.pem 4096
+	@echo "✅ Initialization complete"
 
-## Initialize project structure with secure permissions
-setup:@echo "🔧 Building secure directory structure..."
-	@echo "🔧 Building secure directory structure..."
-	sudo mkdir -p "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
-	sudo chown -R $$(whoami):$$(whoami) "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
-	sudo chmod 755 "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
-	
-	@echo "🔐 Applying cryptographic protections..."
-	sudo openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
-	
-	@echo "📁 Configuring service-specific permissions..."
-	sudo chown -R 101:101 "${LOG_DIR}"
-	sudo chmod 755 "${LOG_DIR}"
-	sudo chcon -Rt httpd_log_t "${LOG_DIR}"
-	
-	sudo chmod 700 "${SSL_DIR}"
-	sudo chown -R root:root "${SSL_DIR}"
-	
-	sudo chown -R 999:999 "${DB_DIR}"
-	sudo chmod 750 "${DB_DIR}"
-
-## Start all services in production mode
 up:
-	${COMPOSE} up -d --build
-	@echo "✅ Services started. Verify with 'make health'"
+	@docker compose up -d --build
+	@echo "🛡️  Services started | Verify with 'make health'"
 
-## Follow container logs in real-time
 logs:
-	${COMPOSE} logs -f
+	@docker compose logs -f
 
-## Check system health status
 health:
-	@echo "🩺 Container status:"
-	${COMPOSE} ps
-	@echo "\n🌐 Testing API endpoint..."
-	curl -k "https://${DOMAIN}/api/health/"
+	@echo "🩺 Container Status:"
+	@docker compose ps
+	@echo "\n🌐 Application Health:"
+	@curl -sk https://localhost/health
 
-# --------------------------
-# 3. Database Management
-# --------------------------
-
-## Create database backup snapshot
-backup:
-	@echo "💾 Backing up database..."
-	${COMPOSE} exec ${DB_SERVICE} pg_dump -U $${POSTGRES_USER} $${POSTGRES_DB} > backup_$(date +%F).sql
-	@echo "🔒 Backup stored as backup_$(date +%F).sql"
-
-## Apply Django database migrations
 migrate:
-	${COMPOSE} exec ${WEB_SERVICE} python manage.py migrate
-	@echo "🗄️ Database schema updated"
+	@docker compose exec django-app python manage.py migrate
 
-# --------------------------
-# 4. Security Maintenance
-# --------------------------
-
-## Renew SSL certificates (Production Only)
-renew-certs:
-	certbot renew --nginx --non-interactive --post-hook "${COMPOSE} restart ${NGINX_SERVICE}"
-	@echo "🔄 Certificates renewed. NGINX restarted."
-
-## Full system rebuild with security updates
-update:
-	@echo "🛠️  Rebuilding containers..."
-	${COMPOSE} build --no-cache
-	${COMPOSE} down
-	${COMPOSE} up -d
-	@echo "⚠️ Warning: Rebuilding containers may cause temporary service interruption"
-
-# --------------------------
-# 5. Deployment Notes
-# --------------------------
-# Production Checklist:
-# 1. Replace ${DOMAIN} with actual production domain
-# 2. Set DEBUG=0 in .env file
-# 3. Rotate all secrets (POSTGRES_PASSWORD, SECRET_KEY, etc)
-#
-# OCI Free Tier Requirements:
-# - Instance Type: VM.Standard.E2.1.Micro
-# - Use Always Free eligible services
-# - Monitor resource usage thresholds
+clean:
+	@docker compose down -v --rmi all
+	@echo "🧹 Cleaned all containers and volumes"
