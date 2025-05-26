@@ -5,14 +5,14 @@
 # --------------------------
 # 1. Environment Configuration
 # --------------------------
-DOMAIN ?= localhost              # Override with production domain
-COMPOSE := docker compose        # Docker Compose command abstraction
-DB_SERVICE := db                 # Database service name
-WEB_SERVICE := web               # Django service name
-NGINX_SERVICE := nginx           # Web server service name
-SSL_DIR := nginx/ssl             # Certificate storage
-LOG_DIR := nginx/logs            # Access/error logs
-DB_DIR := postgres/data          # Database volume
+DOMAIN ?= localhost# Override with production domain
+COMPOSE := docker compose# Docker Compose command abstraction
+DB_SERVICE := db# Database service name
+WEB_SERVICE := web# Django service name
+NGINX_SERVICE := nginx# Web server service name
+SSL_DIR := nginx/ssl# Certificate storage
+LOG_DIR := nginx/logs# Access/error logs
+DB_DIR := postgres/data# Database volume
 
 .PHONY: setup up logs health backup renew-certs update migrate security-check
 
@@ -23,19 +23,19 @@ DB_DIR := postgres/data          # Database volume
 ## Initialize project structure with secure permissions
 setup:
 	@echo "🔧 Building secure directory structure..."
-	mkdir -p ${SSL_DIR} ${LOG_DIR} ${DB_DIR}
+	mkdir -p "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
 	
 	@echo "🔐 Applying cryptographic protections..."
 	openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
 	
 	@echo "📁 Setting strict filesystem permissions..."
-	chmod 700 ${SSL_DIR}  # Restrict certificate access
-	sudo chown -R 101:101 ${LOG_DIR}  # Match Nginx container user
-	sudo chown -R 999:999 ${DB_DIR}  # Align with Postgres container user
+	chmod 700 "${SSL_DIR}"  # Restrict certificate access
+	sudo chown -R 101:101 "${LOG_DIR}"  # Match Nginx container user
+	sudo chown -R 999:999 "${DB_DIR}"  # Align with Postgres container user
 	
 	@echo "📝 Creating log files..."
-	touch ${LOG_DIR}/{access,error}.log
-
+	touch "${LOG_DIR}/access.log" "${LOG_DIR}/error.log"
+    
 ## Start all services in production mode
 up:
 	${COMPOSE} up -d --build
