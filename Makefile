@@ -22,6 +22,7 @@ DB_DIR := postgres/data# Database volume
 
 ## Initialize project structure with secure permissions
 setup:@echo "🔧 Building secure directory structure..."
+	@echo "🔧 Building secure directory structure..."
 	sudo mkdir -p "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
 	sudo chown -R $$(whoami):$$(whoami) "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
 	sudo chmod 755 "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"  # Base permissions
