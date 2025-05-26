@@ -24,21 +24,19 @@ DB_DIR := postgres/data# Database volume
 setup:
 	@echo "🔧 Building secure directory structure..."
 	sudo mkdir -p "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
-	sudo chown -R $(whoami):$(whoami) "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
+	sudo chown -R $$(whoami):$$(whoami) "${SSL_DIR}" "${LOG_DIR}" "${DB_DIR}"
 	
 	@echo "📝 Creating log files..."
-	touch "${LOG_DIR}/access.log" "${LOG_DIR}/error.log"
+	sudo touch "${LOG_DIR}/access.log" "${LOG_DIR}/error.log"
+	sudo chmod 644 "${LOG_DIR}"/*.log
 	
 	@echo "🔐 Applying cryptographic protections..."
-	openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
+	sudo openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
 	
 	@echo "📁 Setting strict filesystem permissions..."
 	sudo chmod 700 "${SSL_DIR}"
-	sudo chown -R 101:101 "${LOG_DIR}"
-	sudo chown -R 999:999 "${DB_DIR}"
 	sudo chcon -Rt httpd_log_t "${LOG_DIR}"  # SELinux context
-	sudo chmod 644 "${LOG_DIR}"/*.log
-    
+
 ## Start all services in production mode
 up:
 	${COMPOSE} up -d --build
