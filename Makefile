@@ -1,49 +1,21 @@
 # File: Makefile
-# Path: my-property/Makefile
-# Purpose: Unified deployment automation with safety checks
+# Add these targets to existing file
 
-.PHONY: validate setup up logs health migrate clean renew-certs
+.PHONY: secrets setup
 
-# ---- Environment Validation ----
-validate:
-	@echo "🔍 Validating environment..."
-	@test -f .env || (echo "ERROR: Missing .env file"; exit 1)
-	@test -f secrets/db_password.txt || (echo "ERROR: Missing DB secret"; exit 1)
-	@test -f secrets/redis_password.txt || (echo "ERROR: Missing Redis secret"; exit 1)
-	@echo "✅ Environment validation passed"
+# ---- Secret Management ----
+secrets:
+	@echo "🔑 Generating secret files from .env..."
+	@mkdir -p secrets && chmod 700 secrets
+	@grep -E '^POSTGRES_USER=' .env | cut -d= -f2- > secrets/db_user.txt
+	@grep -E '^POSTGRES_PASSWORD=' .env | cut -d= -f2- > secrets/db_password.txt
+	@grep -E '^REDIS_PASSWORD=' .env | cut -d= -f2- > secrets/redis_password.txt
+	@chmod 600 secrets/*.txt
+	@echo "✅ Secrets generated | Never commit these files!"
 
-# ---- Core Workflow ----
-setup: validate
-	@echo "🔧 Initializing infrastructure..."
-	@mkdir -p nginx/ssl postgres/data redis/data
+# ---- Modified Setup Target ----
+setup: secrets validate
 	@echo "🔐 Generating crypto material..."
+	@mkdir -p nginx/ssl
 	@openssl dhparam -out nginx/ssl/dhparam.pem 4096
-	@echo "📁 Setting permissions..."
-	@sudo chown -R 101:101 nginx/ssl
-	@sudo chmod 750 nginx/ssl
-	@echo "✅ Setup complete | Run 'make up' to start services"
-
-up:
-	@docker compose up -d --build
-	@echo "🛡️  Services started | Verify with 'make health'"
-
-logs:
-	@docker compose logs -f
-
-health:
-	@echo "🩺 Container Status:"
-	@docker compose ps
-	@echo "\n🌐 Application Health:"
-	@curl -sk https://localhost/health
-
-migrate:
-	@docker compose exec django-app python manage.py migrate
-
-clean:
-	@docker compose down -v --rmi all
-	@echo "🧹 Cleaned all containers and volumes"
-
-renew-certs:
-	@docker compose run --rm certbot renew
-	@docker compose restart nginx-proxy
-	@echo "🔄 Certificates renewed and NGINX reloaded"
+	@echo "✅ Setup complete"
