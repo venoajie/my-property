@@ -43,4 +43,4 @@ class ListingsConfig(AppConfig):
         - Add environment checks if needed
         """
         # Import signals module to activate handlers
-        from . import signals  # noqa: F401
+        pass
