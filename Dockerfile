@@ -14,6 +14,8 @@ FROM python:3.12-slim-bookworm AS builder
 # WARNING: Pass these via CI/CD secrets in production
 ARG SECRET_KEY="dummy-secret-for-build"
 ARG POSTGRES_PASSWORD="dummy-db-password"
+ARG POSTGRES_DB="dummy-db"  # Added missing database name argument
+ARG POSTGRES_USER="dummy-user"  # Added database user argument
 
 # --------------------------
 # Environment Configuration
@@ -27,6 +29,10 @@ ENV \
     PYTHONPATH="/app:/app/apps:/app/config" \
     # Django settings
     DJANGO_SETTINGS_MODULE="config.settings.production" \
+    # Database configuration
+    POSTGRES_DB="${POSTGRES_DB}" \
+    POSTGRES_USER="${POSTGRES_USER}" \
+    POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
     # Build identification
     IN_DOCKER_BUILD=1
 
@@ -92,7 +98,11 @@ ENV \
     # Application configuration
     PYTHONPATH="/app:/app/apps:/app/config" \
     DJANGO_SETTINGS_MODULE="config.settings.production" \
-    PORT=8000
+    PORT=8000 \
+    # Database configuration
+    POSTGRES_HOST="postgres-db" \
+    POSTGRES_PORT="5432"
+
 
 # --------------------------
 # System Setup
