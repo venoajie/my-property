@@ -14,6 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/ssl:/ssl:ro  # For production SSL certs
+      - ./postgres/initdb:/docker-entrypoint-initdb.d
     networks:
       - backend
     healthcheck:
@@ -26,6 +27,7 @@ services:
       -c ssl_cert_file=/ssl/server.crt
       -c ssl_key_file=/ssl/server.key
       -c ssl_ca_file=/ssl/ca.crt
+      -c password_encryption=scram-sha-256
 
   redis-cache:
     image: redis:7-alpine
