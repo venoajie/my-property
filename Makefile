@@ -2,7 +2,8 @@
 # Path: my-property/Makefile
 # Purpose: Safe deployment automation with dependency checks
 
-.PHONY: validate init up logs health migrate clean
+.PHONY: validate init up logs health migrate clean renew-certs
+
 
 # ---- Environment Validation ----
 validate:
@@ -36,3 +37,8 @@ migrate:
 clean:
 	@docker compose down -v --rmi all
 	@echo "🧹 Cleaned all containers and volumes"
+
+renew-certs:
+	@docker compose run --rm certbot renew
+	@docker compose restart nginx-proxy
+	@echo "🔄 Certificates renewed and NGINX reloaded"
