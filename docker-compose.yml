@@ -1,57 +1,67 @@
-# my-property/docker-compose.yml
-# Service Architecture: [Database] ← [App] → [Cache] → [Monitoring] | [Proxy] → Internet
+# File: docker-compose.yml
+# Path: my-property/docker-compose.yml
+# Purpose: Production-grade orchestration with zero compromise on security
+
+version: '3.8'
+
+x-security-defaults: &security-defaults
+  stop_grace_period: 10s
+  restart: unless-stopped
+  read_only: true
+  user: "nonroot"  # Default non-root user
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
 
 services:
-  # --- CORE DATA SERVICES ---
+  # ---- Database Layer ----
   postgres-db:
+    <<: *security-defaults
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}            # .env: Database name
-      POSTGRES_USER: ${POSTGRES_USER}        # .env: Database user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # HARDCODED: Use Docker secrets in production
-      LANG: en_US.utf8  
-      LC_ALL: en_US.utf8 
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_user
+      - db_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/ssl:/ssl:ro  # For production SSL certs
-      - ./postgres/initdb:/docker-entrypoint-initdb.d
+      - ./postgres/ssl:/ssl:ro
     networks:
-      - backend
+      - secure-backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 2s
-      timeout: 2s
-      retries: 15
+      test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/db_user) -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     command: >-
-      -c ssl=on  # Enable SSL
+      -c ssl=on
       -c ssl_cert_file=/ssl/server.crt
       -c ssl_key_file=/ssl/server.key
       -c ssl_ca_file=/ssl/ca.crt
-      -c password_encryption=scram-sha-256
 
+  # ---- Cache Layer ----
   redis-cache:
+    <<: *security-defaults
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}  # HARDCODED: Rotate quarterly
+    command: redis-server --requirepass $$(cat /run/secrets/redis_password)
+    secrets:
+      - redis_password
     networks:
-      - backend
+      - secure-backend
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "$$(cat /run/secrets/redis_password)", "ping"]
 
-  # --- APPLICATION SERVICES ---
+  # ---- Application Layer ----
   django-app:
+    <<: *security-defaults
     build: 
       context: .
       dockerfile: Dockerfile
       args:
-        - SECRET_KEY=${SECRET_KEY}
-        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    command: >
-      sh -c "python manage.py wait_for_db --timeout 60 --interval 5 &&
-            python manage.py migrate &&
-            python manage.py check --deploy &&
-            gunicorn --bind 0.0.0.0:8000 config.wsgi:application"
+        - UID=${HOST_UID:-1001}
     env_file: .env
     depends_on:
       postgres-db:
@@ -59,57 +69,61 @@ services:
       redis-cache:
         condition: service_healthy
     networks:
-      - backend
-      - frontend
-    ports:
-      - "${APP_PORT:-8000}:8000"
+      - secure-backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-fsk", "https://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # --- OBSERVABILITY ---
-  prometheus-monitoring:
+  # ---- Monitoring Layer ----
+  prometheus:
+    <<: *security-defaults
     image: prom/prometheus:v2.47.0
     volumes:
+      - prometheus_data:/prometheus
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     networks:
-      - backend
+      - secure-backend
     command: --config.file=/etc/prometheus/prometheus.yml
 
-  # --- NETWORK SERVICES ---  
+  # ---- Proxy Layer ----
   nginx-proxy:
+    <<: *security-defaults
     image: nginx:1.25-alpine
     ports:
-      - "80:80"    # HARDCODED: Disable when using cloud load balancer
-      - "443:443"  # HARDCODED: Use ACM/Let's Encrypt for production certificates
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:  
+      - certbot-data:/etc/letsencrypt
+    depends_on:
       django-app:
         condition: service_healthy
-
     networks:
-      - frontend
-      - backend
+      - secure-frontend
+      - secure-backend
 
 volumes:
-  postgres_data:    # Persistent storage for database
-  prometheus_data:  # Metrics storage (retain for 30 days)
+  postgres_data:
+    driver_opts:
+      type: none
+      device: ./data/postgres
+      o: bind
+  prometheus_data:
+  certbot-data:
+
+secrets:
+  db_user:
+    file: ./secrets/db_user.txt
+  db_password:
+    file: ./secrets/db_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
 
 networks:
-  backend:
+  secure-backend:
     driver: bridge
-    internal: false  # true: Security: No direct internet access, false: Allow cross-network communication
-  frontend:         # Public-facing network
+    internal: true  # No direct internet access
+  secure-frontend:
     driver: bridge
-
-# CRITICAL SECURITY REQUIREMENTS
-# 1. Never commit .env file - add to .gitignore
-# 2. Generate production certificates:
-#    openssl dhparam -out nginx/ssl/dhparam.pem 4096
-# 3. Implement firewall rules:
-#    - Allow only 443 (HTTPS) and 22 (SSH)
-#    - Block all other inbound ports
