@@ -1,7 +1,20 @@
 # File: Makefile
 # Add these targets to existing file
 
-.PHONY: secrets setup
+# File: Makefile
+# Path: my-property/Makefile
+# Purpose: Safe deployment automation with dependency checks
+
+.PHONY: validate secrets setup up logs health migrate clean renew-certs
+
+# ---- Environment Validation ----
+validate:
+	@echo "🔍 Validating environment..."
+	@test -f .env || (echo "ERROR: Missing .env file"; exit 1)
+	@test -f secrets/db_user.txt || (echo "ERROR: Missing DB user secret"; exit 1)
+	@test -f secrets/db_password.txt || (echo "ERROR: Missing DB password secret"; exit 1)
+	@test -f secrets/redis_password.txt || (echo "ERROR: Missing Redis secret"; exit 1)
+	@echo "✅ Environment validation passed"
 
 # ---- Secret Management ----
 secrets:
@@ -13,9 +26,15 @@ secrets:
 	@chmod 600 secrets/*.txt
 	@echo "✅ Secrets generated | Never commit these files!"
 
-# ---- Modified Setup Target ----
+# ---- Core Workflow ----
 setup: secrets validate
 	@echo "🔐 Generating crypto material..."
 	@mkdir -p nginx/ssl
 	@openssl dhparam -out nginx/ssl/dhparam.pem 4096
-	@echo "✅ Setup complete"
+	@echo "✅ Setup complete | Run 'make up' to start services"
+
+up:
+	@docker compose up -d --build
+	@echo "🛡️  Services started | Verify with 'make health'"
+    
+    
