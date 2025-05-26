@@ -26,7 +26,7 @@ setup:
 	mkdir -p ${SSL_DIR} ${LOG_DIR} ${DB_DIR}
 	
 	@echo "🔐 Applying cryptographic protections..."
-	openssl dhparam -out ${SSL_DIR}/dhparam.pem 2048  # DH params for perfect forward secrecy
+	openssl dhparam -out "${SSL_DIR}/dhparam.pem" 2048
 	
 	@echo "📁 Setting strict filesystem permissions..."
 	chmod 700 ${SSL_DIR}  # Restrict certificate access
