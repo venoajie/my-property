@@ -1,22 +1,27 @@
 # File: Makefile
 # Path: my-property/Makefile
-# Purpose: Safe deployment automation with dependency checks
+# Purpose: Unified deployment automation with safety checks
 
-.PHONY: validate init up logs health migrate clean renew-certs
-
+.PHONY: validate setup up logs health migrate clean renew-certs
 
 # ---- Environment Validation ----
 validate:
+	@echo "🔍 Validating environment..."
 	@test -f .env || (echo "ERROR: Missing .env file"; exit 1)
 	@test -f secrets/db_password.txt || (echo "ERROR: Missing DB secret"; exit 1)
 	@test -f secrets/redis_password.txt || (echo "ERROR: Missing Redis secret"; exit 1)
+	@echo "✅ Environment validation passed"
 
 # ---- Core Workflow ----
-init: validate
+setup: validate
+	@echo "🔧 Initializing infrastructure..."
+	@mkdir -p nginx/ssl postgres/data redis/data
 	@echo "🔐 Generating crypto material..."
-	@mkdir -p nginx/ssl
 	@openssl dhparam -out nginx/ssl/dhparam.pem 4096
-	@echo "✅ Initialization complete"
+	@echo "📁 Setting permissions..."
+	@sudo chown -R 101:101 nginx/ssl
+	@sudo chmod 750 nginx/ssl
+	@echo "✅ Setup complete | Run 'make up' to start services"
 
 up:
 	@docker compose up -d --build
