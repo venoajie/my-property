@@ -68,7 +68,7 @@ RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
     mkdir -p /app/staticfiles /var/log/django && \
     chown -R appuser:appuser /app /var/log/django
 
-    
+
 # --------------------------
 # Python Environment
 # --------------------------
@@ -140,14 +140,15 @@ RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
 # --------------------------
 # SSL Configuration
 # --------------------------
-# Security: Certificate verification
-RUN test -f nginx/ssl/rootCA.crt || { \
-    echo "FATAL: Missing root CA certificate"; \
-    echo "Generate with: openssl req -x509 -nodes -newkey rsa:2048 -keyout nginx/ssl/rootCA.key -out nginx/ssl/rootCA.crt -days 365 -subj '/CN=TempCA/O=Development/C=US'"; \
+# Copy CA certificate first
+COPY --chown=appuser:appuser nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
+
+# Security: Verify certificate presence
+RUN test -f /usr/local/share/ca-certificates/rootCA.crt || { \
+    echo "FATAL: Missing root CA certificate in container"; \
     exit 1; \
 }
 
-COPY --chown=appuser:appuser nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
 RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
 
