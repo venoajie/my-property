@@ -23,8 +23,8 @@ class ListingsConfig(AppConfig):
             Required for Django's app registry system
     """
     
-    # Application identity (DO NOT CHANGE without migrations)
-    name: str = 'listings'  
+    # Application identity matching Django's app registry (DO NOT CHANGE without migrations)
+    name = 'apps.listings' 
     
     # Human-readable name for admin interface
     verbose_name: str = "Property Listings Management"  
