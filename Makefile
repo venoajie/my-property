@@ -38,7 +38,7 @@ setup: secrets validate
 	else \
 		echo "🔑 Existing certificates found - skipping generation"; \
 	fi
-	@openssl dhparam -out nginx/ssl/dhparam.pem 4096
+	@openssl dhparam -out nginx/ssl/dhparam.pem 2048
 	@echo "✅ Setup complete | Run 'make up' to start services"
     # newkey rsa:2048, change to newkey rsa:4096 in production
 
