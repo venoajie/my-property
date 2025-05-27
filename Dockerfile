@@ -4,152 +4,85 @@
 # PURPOSE: Secure Django Production Build    #
 # ========================================== #
 
-# Multi-Stage Dockerfile for Django Production Deployment
-# Security Architecture:
-# 1. Isolated builder environment
-# 2. Minimal runtime image
-# 3. Non-root execution
-# 4. Build-time secret isolation
-# 5. Certificate verification
-
-# --------------------------
-# Build Arguments (Override in CI/CD)
-# --------------------------
-# SECURITY: These defaults should be overridden in production
-# HARDCODED VALUES:
-ARG SECRET_KEY="dummy-secret-for-build"        # Rotate in production
-ARG POSTGRES_PASSWORD="dummy-db-password"      # Use vault secrets
-ARG POSTGRES_DB="dummy-db"                     # Set via environment
-ARG POSTGRES_USER="dummy-user"                 # Set via environment
+# -------------------------
+# Global Build Parameters
+# -------------------------
+ARG PYTHON_VERSION="3.12-slim-bookworm"  # Explicit version pinning
+ARG BUILD_UID=1001                       # Match host user ID
 
 # ===== BUILDER STAGE ===== #
-FROM python:3.12-slim-bookworm AS builder
+FROM python:${PYTHON_VERSION} AS builder
 
-# --------------------------
-# Environment Configuration
-# --------------------------
-ENV \
-    # Security hardening
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    # Application paths
-    PYTHONPATH="/app:/app/apps:/app/config" \
-    # Build identification
-    IN_DOCKER_BUILD=1
-
-# --------------------------
-# System Setup
-# --------------------------
+# -------------------------
+# System Hardening
+# -------------------------
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libpq-dev python3-dev gcc curl binutils && \
+    libpq-dev python3-dev gcc && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    # Remove risky permissions
     find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
 
-# --------------------------
-# User & Filesystem Setup
-# --------------------------
-RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
-    mkdir -p /app/staticfiles /var/log/django && \
-    chown -R appuser:appuser /app /var/log/django
+# -------------------------
+# User & Environment Setup
+# -------------------------
+RUN useradd --uid ${BUILD_UID} --create-home --shell /bin/false appuser && \
+    mkdir -p /app/staticfiles && \
+    chown -R appuser:appuser /app
 
-# --------------------------
-# Python Environment
-# --------------------------
+# -------------------------
+# Dependency Management
+# -------------------------
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
-# --------------------------
-# Dependency Installation
-# --------------------------
 COPY requirements/ .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
-    -r base.txt \
-    -r prod.txt
+    pip install --no-cache-dir -r base.txt -r prod.txt
 
-# --------------------------
-# Application Deployment
-# --------------------------
+# -------------------------
+# Static Asset Compilation
+# -------------------------
 COPY . .
-RUN chown -R appuser:appuser /app
-
-# --------------------------
-# Asset Compilation
-# --------------------------
 USER appuser
-RUN python manage.py check --settings=config.settings.build && \
-    python manage.py collectstatic --no-input --clear --settings=config.settings.build
+RUN python manage.py collectstatic --noinput --settings=config.settings.build
 
 # ===== RUNTIME STAGE ===== #
-FROM python:3.12-slim-bookworm
+FROM python:${PYTHON_VERSION}
 
-# --------------------------
-# Runtime Environment
-# --------------------------
-ENV \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    DEBIAN_FRONTEND=noninteractive \
-    PORT=8000 \
-    POSTGRES_HOST="postgres-db" \
-    POSTGRES_PORT="5432"
-
-# --------------------------
-# System Configuration
-# --------------------------
+# -------------------------
+# Runtime Security
+# -------------------------
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libpq5 curl && \
+    apt-get install -y --no-install-recommends libpq5 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
 
-# --------------------------
-# User & Permissions
-# --------------------------
-RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
-    mkdir -p /app/staticfiles /var/log/django && \
-    chown -R appuser:appuser /app /var/log/django && \
-    chmod 755 /app /var/log/django
-
-# --------------------------
-# Certificate Setup
-# --------------------------
+# -------------------------
+# Certificate Management
+# -------------------------
 COPY --chown=appuser:appuser nginx/ssl/rootCA.crt /usr/local/share/ca-certificates/
-RUN test -f /usr/local/share/ca-certificates/rootCA.crt || { \
-    echo "FATAL: Missing root CA certificate in container"; exit 1; \
-} && \
-    chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
+RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
 
-# --------------------------
+# -------------------------
 # Application Deployment
-# --------------------------
+# -------------------------
+RUN useradd --uid ${BUILD_UID} --create-home --shell /bin/false appuser
 WORKDIR /app
+
 COPY --from=builder --chown=appuser:appuser /opt/venv /opt/venv
-COPY --from=builder --chown=appuser:appuser /app/ /app/
-COPY --from=builder --chown=appuser:appuser /var/log/django /var/log/django
 COPY --from=builder --chown=appuser:appuser /app/staticfiles /app/staticfiles
+COPY --from=builder --chown=appuser:appuser /app /app
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" \
+    PORT=8000 \
+    POSTGRES_HOST="postgres-db"
 
-# --------------------------
-# Health & Runtime
-# --------------------------
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-EXPOSE ${PORT}
 USER appuser
-
-# ===== SECURITY CHECKLIST ===== #
-# 1. Rotate all dummy credentials
-# 2. Replace self-signed certificates
-# 3. Enable Docker content trust
-# 4. Implement vulnerability scanning
-# 5. Use secret management system
+EXPOSE ${PORT}

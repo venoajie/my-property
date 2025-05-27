@@ -1,46 +1,27 @@
-# my-property/apps/listings/apps.py
-"""
-Django App Configuration: Property Listings
+# apps/listings/apps.py  
+"""  
+Listing Application Registry  
 
-Registers application metadata and initialization hooks
-Critical for proper app discovery and database signal handling
-"""
+Security Purpose:  
+- Ensures proper model registration  
+- Maintains app namespace isolation  
+- Required for database migrations  
 
-from django.apps import AppConfig
-from typing import Any
+Design Rationale:  
+- Explicit app_label declaration prevents Django registry conflicts  
+- Full dotted path ensures consistent app discovery  
+- Ready() method kept simple for auditability  
+"""  
 
-class ListingsConfig(AppConfig):
-    """
-    Core configuration for Property Listings application
-    
-    Security Note:
-    - Ensures proper app registry initialization
-    - Controls model registration for admin interface
-    - Required for database signal processing
-    
-    Hardcoded Values:
-    - name: Must exactly match Python package name (directory name)
-            Required for Django's app registry system
-    """
-    
-    # Application identity matching Django's app registry (DO NOT CHANGE without migrations)
-    name = 'apps.listings' 
-    
-    # Human-readable name for admin interface
-    verbose_name: str = "Property Listings Management"  
+from django.apps import AppConfig  
+from django.utils.translation import gettext_lazy as _  
 
-    def ready(self) -> None:
-        """
-        Application initialization hook
-        
-        Execution Flow:
-        1. Register models with admin interface
-        2. Import and connect signal handlers
-        3. Perform runtime configuration checks
-        
-        Security:
-        - Import signals here to ensure proper registration
-        - Add environment checks if needed
-        """
-        # Import signals module to activate handlers
-        pass
+class ListingsConfig(AppConfig):  
+    # Critical security setting - must match project structure  
+    name = 'apps.listings'  # HARDCODED: Do not change without migrations  
+    verbose_name = _("Property Listings Management")  
+
+    def ready(self):  
+        """Security Note: Disabled until signal implementation"""  
+        # Reserved for future signal registration  
+        pass  

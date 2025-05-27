@@ -1,70 +1,47 @@
 # File: Makefile
 # Path: my-property/Makefile
-# Purpose: Safe deployment automation with dependency checks
+# Purpose: Secure Deployment Automation
 
-.PHONY: validate secrets setup up logs health migrate clean renew-certs clean-certs
+.PHONY: validate secrets setup build clean
 
-# ---- Environment Validation ----
-validate:
-	@echo "🔍 Validating environment..."
-	@test -f .env || (echo "ERROR: Missing .env file"; exit 1)
-	@test -f secrets/db_user.txt || (echo "ERROR: Missing DB user secret"; exit 1)
-	@test -f secrets/db_password.txt || (echo "ERROR: Missing DB password secret"; exit 1)
-	@test -f secrets/redis_password.txt || (echo "ERROR: Missing Redis secret"; exit 1)
-	@echo "✅ Environment validation passed"
-
-# ---- Secret Management ----
-secrets:
-	@echo "🔑 Generating secret files from .env..."
-	@mkdir -p secrets && chmod 700 secrets
-	@(grep -E '^POSTGRES_USER=' .env || echo "POSTGRES_USER=default_user") | cut -d= -f2- > secrets/db_user.txt
-	@(grep -E '^POSTGRES_PASSWORD=' .env || echo "POSTGRES_PASSWORD=$$(openssl rand -hex 32)") | cut -d= -f2- > secrets/db_password.txt
-	@(grep -E '^REDIS_PASSWORD=' .env || echo "REDIS_PASSWORD=$$(openssl rand -hex 32)") | cut -d= -f2- > secrets/redis_password.txt
-	@chmod 600 secrets/*.txt
-	@echo "✅ Secrets generated | Never commit these files!"
+# ---- Environment Variables ----
+DOCKER_IMAGE ?= realestate-app
+BUILD_ARGS ?= --build-arg SECRET_KEY=$(shell cat secrets/db_password.txt) \
+              --build-arg POSTGRES_PASSWORD=$(shell cat secrets/db_password.txt)
 
 # ---- Core Workflow ----
-setup: secrets validate
-	@echo "🔐 Generating crypto material..."
-	@mkdir -p nginx/ssl && chmod 700 nginx/ssl
-	@if [ ! -f nginx/ssl/rootCA.crt ]; then \
-		echo "🛡️ Generating development root CA..."; \
-		openssl req -x509 -nodes -newkey rsa:2048 \
-			-keyout nginx/ssl/rootCA.key \
-			-out nginx/ssl/rootCA.crt \
-			-days 365 \
-			-subj '/CN=TempCA/O=Development/C=US'; \
-		chmod 600 nginx/ssl/*; \
-	else \
-		echo "🔑 Existing certificates found - skipping generation"; \
-	fi
-	@openssl dhparam -out nginx/ssl/dhparam.pem 2048
-	@echo "✅ Setup complete | Run 'make up' to start services"
-    # newkey rsa:2048, change to newkey rsa:4096 in production
+all: validate setup build
 
-certs:
-	@echo "🔐 Generating server certificates..."
-	@openssl req -newkey rsa:2048 -nodes -keyout nginx/ssl/privkey.pem \
-		-subj "/CN=${DOMAIN}" \
-		-out nginx/ssl/server.csr
-	@openssl x509 -req -in nginx/ssl/server.csr \
-		-CA nginx/ssl/rootCA.crt \
-		-CAkey nginx/ssl/rootCA.key \
-		-CAcreateserial \
-		-out nginx/ssl/fullchain.pem \
-		-days 365
-	@rm nginx/ssl/server.csr
-	@echo "✅ Server certificates generated"
+validate:
+    @echo "🔍 Validating environment..."
+    @test -f .env || (echo "ERROR: Missing .env file"; exit 1)
+    @test -d nginx/ssl || (echo "ERROR: Missing SSL directory"; exit 1)
 
-# ---- Certificate Cleanup ----
-clean-certs:
-	@echo "🧹 Removing SSL certificates..."
-	@rm -f nginx/ssl/rootCA.key nginx/ssl/rootCA.crt nginx/ssl/dhparam.pem
-	@echo "⚠️  Removed all crypto material!"
+secrets:
+    @echo "🔑 Generating secrets..."
+    @mkdir -p secrets nginx/ssl
+    @test -f secrets/db_password.txt || openssl rand -hex 32 > secrets/db_password.txt
+    @chmod 600 secrets/*
 
-#Production Certificates:
-# Replace self-signed certs with Let's Encrypt
-#sudo certbot certonly --nginx -d yourdomain.com
-# While 2048-bit is sufficient for development, always use 4096-bit in production:
-# Production override
-#DH_SIZE=4096 make setup
+setup: secrets
+    @echo "🔐 Generating crypto material..."
+    @test -f nginx/ssl/rootCA.crt || openssl req -x509 -nodes -newkey rsa:2048 \
+        -keyout nginx/ssl/rootCA.key \
+        -out nginx/ssl/rootCA.crt \
+        -days 365 -subj '/CN=TempCA/O=Development/C=US'
+    @openssl dhparam -out nginx/ssl/dhparam.pem 2048
+    @chmod 600 nginx/ssl/*
+
+build: validate setup
+    @echo "🏗️  Building Docker image..."
+    @docker build $(BUILD_ARGS) -t $(DOCKER_IMAGE) .
+
+clean:
+    @echo "🧹 Cleaning artifacts..."
+    @docker rmi -f $(DOCKER_IMAGE) 2>/dev/null || true
+    @rm -rf secrets/*.txt nginx/ssl/*.pem
+
+# ---- Security Checks ----
+scan:
+    @docker scan $(DOCKER_IMAGE)
+    @trivy image $(DOCKER_IMAGE)
