@@ -65,7 +65,7 @@ clean-certs:
 
 #Production Certificates:
 # Replace self-signed certs with Let's Encrypt
-sudo certbot certonly --nginx -d yourdomain.com
+#sudo certbot certonly --nginx -d yourdomain.com
 # While 2048-bit is sufficient for development, always use 4096-bit in production:
 # Production override
-DH_SIZE=4096 make setup
+#DH_SIZE=4096 make setup
