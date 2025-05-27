@@ -51,6 +51,10 @@ RUN python manage.py collectstatic --noinput --settings=config.settings.build
 # ===== RUNTIME STAGE ===== #
 FROM python:${PYTHON_VERSION}
 
+# Re-declare build arguments for this stage
+ARG BUILD_UID
+
+
 # -------------------------
 # Runtime Security
 # -------------------------
@@ -67,10 +71,15 @@ COPY --chown=appuser:appuser nginx/ssl/rootCA.crt /usr/local/share/ca-certificat
 RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
     update-ca-certificates
 
+    
 # -------------------------
-# Application Deployment
+# User & Permissions
 # -------------------------
-RUN useradd --uid ${BUILD_UID} --create-home --shell /bin/false appuser
+RUN useradd --uid ${BUILD_UID} --create-home --shell /bin/false appuser && \
+    mkdir -p /app/staticfiles && \
+    chown -R appuser:appuser /app
+    
+    
 WORKDIR /app
 
 COPY --from=builder --chown=appuser:appuser /opt/venv /opt/venv
