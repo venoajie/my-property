@@ -6,7 +6,8 @@
 
 # ---- Environment Variables ----
 DOCKER_IMAGE ?= realestate-app
-BUILD_ARGS ?= --build-arg SECRET_KEY=$(shell cat secrets/db_password.txt) \
+BUILD_ARGS ?= --build-arg BUILD_UID=$(shell id -u) \
+              --build-arg SECRET_KEY=$(shell cat secrets/db_password.txt) \
               --build-arg POSTGRES_PASSWORD=$(shell cat secrets/db_password.txt)
 
 # ---- Core Workflow ----
