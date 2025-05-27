@@ -2,17 +2,18 @@
 # Path: my-property/docker-compose.yml
 # Purpose: Production-grade orchestration with zero compromise on security
 
-version: '3.8'
 
+# Security Defaults (Applied to all services)
 x-security-defaults: &security-defaults
-  stop_grace_period: 10s
-  restart: unless-stopped
-  read_only: true
-  user: "nonroot"  # Default non-root user
-  cap_drop:
-    - ALL
-  security_opt:
-    - no-new-privileges:true
+  stop_grace_period: 10s       # Graceful shutdown window
+  restart: unless-stopped      # Automatic recovery
+  read_only: true             # Immutable filesystem
+  user: "nonroot"             # Non-root execution
+  cap_drop: [ALL]             # Drop all capabilities
+  security_opt: 
+    - no-new-privileges:true  # Privilege escalation prevention
+
+
 
 services:
   # ---- Database Layer ----
@@ -28,7 +29,7 @@ services:
       - db_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/ssl:/ssl:ro
+      - ./postgres/ssl:/ssl:ro  # SSL certificates mount
     networks:
       - secure-backend
     healthcheck:
@@ -108,7 +109,7 @@ volumes:
   postgres_data:
     driver_opts:
       type: none
-      device: ./data/postgres
+      device: ./data/postgres # Persistent storage location
       o: bind
   prometheus_data:
   certbot-data:
@@ -127,3 +128,5 @@ networks:
     internal: true  # No direct internet access
   secure-frontend:
     driver: bridge
+
+    

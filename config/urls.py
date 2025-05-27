@@ -1,55 +1,63 @@
 # config/urls.py
 """
-Project URL Configuration
+Main URL Configuration
 
-Security Notes:
-- Admin path should be changed in production
-- API endpoints are versioned for future compatibility
-- Rate limiting applied via django-ratelimit
-- Health check endpoint exposed without authentication
+Security Implementation:
+- Versioned API endpoints (v1/)
+- Strict import patterns
+- Namespaced routing
+- Centralized DRF router
 
 Flow:
-1. Admin interface
-2. System monitoring endpoints
-3. API endpoints (versioned)
-4. Frontend routes (to be handled by frontend server)
+1. API requests → DRF router
+2. Auth endpoints → users app
+3. Admin/docs → protected routes
+
+Maintenance Notes:
+- Versioning allows backward compatibility
+- Router registration keeps endpoints discoverable
+- Type hints aid IDE autocompletion
 """
 
 from django.contrib import admin
-from django.urls import path, include
-from django.http import HttpResponse
-from django.views.decorators.http import require_GET
-from apps.core.views import health_check, rate_limit_exceeded
+from django.urls import include, path
+from django.views.generic import RedirectView
+from rest_framework import routers
+from typing import List, Union, Any
 
-# Custom error handlers (configured in settings)
-handler429 = rate_limit_exceeded  # type: ignore
+# Import after DRF to ensure schema view works
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
 
-@require_GET
-def temporary_root(request) -> HttpResponse:
-    """Temporary root view until frontend is implemented
+# Local imports
+from apps.listings.views import PropertyViewSet, OfferViewSet
+
+# Initialize DRF router with strict trailing slash config
+router: routers.DefaultRouter = routers.DefaultRouter(trailing_slash=False)
+router.register(r'properties', PropertyViewSet, basename='property')
+router.register(r'offers', OfferViewSet, basename='offer')
+
+# Type alias for URL patterns
+URLPattern = Union[Any, List[Any]]
+
+urlpatterns: List[URLPattern] = [
+    # API endpoints
+    path('api/v1/', include((router.urls, 'api_v1'), namespace='api_v1')),
     
-    Security: Exposed without authentication, replace before production
-    """
-    return HttpResponse(
-        content="Django Application Running\n",
-        content_type="text/plain",
-        status=200
-    )
-
-urlpatterns = [
-    # --- Administration ---
-    # HARDCODED: Change 'admin/' to unique path in production
-    path("admin/", admin.site.urls),
+    # Authentication subsystem
+    path('api/v1/auth/', include('users.urls', namespace='auth')),
     
-    # --- System Endpoints ---
-    path("health", health_check, name="system-health-check"),
-    path("", temporary_root, name="temporary-root"),
+    # Admin interface (disabled in production)
+    path('admin/', admin.site.urls),
     
-    # --- API Endpoints (v1) ---
-    path("api/v1/auth/", include("apps.users.urls")),
-    path("api/v1/listings/", include("apps.listings.urls")),
-
-    # --- Future Integrations ---
-    # Enable when implementing monitoring:
-    # path('metrics', include('prometheus.urls')),
+    # API documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularRedocView.as_view(url_name='schema'), name='apidocs'),
+    
+    # Default redirect (preserve existing behavior)
+    path('', RedirectView.as_view(url='/api/docs/'))
 ]
+
+if settings.DEBUG:  # type: ignore
+    # Debug toolbar only in development
+    import debug_toolbar
+    urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]

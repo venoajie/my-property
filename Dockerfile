@@ -24,11 +24,11 @@ FROM python:3.12-slim-bookworm AS builder
 # --------------------------
 # Build Configuration
 # --------------------------
-# Security: Build arguments with safe defaults
-ARG SECRET_KEY="dummy-secret-for-build"       # Must be overridden in CI/CD
-ARG POSTGRES_PASSWORD="dummy-db-password"     # Must be overridden in CI/CD
-ARG POSTGRES_DB="dummy-db"                    # Must be overridden in CI/CD
-ARG POSTGRES_USER="dummy-user"                # Must be overridden in CI/CD
+# Security: Default values should be overridden in CI/CD
+ARG SECRET_KEY="dummy-secret-for-build"       # Must be overridden in CI/CD/production!
+ARG POSTGRES_PASSWORD="dummy-db-password"     # Must be overridden in CI/CD/production!
+ARG POSTGRES_DB="dummy-db"                    # Must be overridden in CI/CD/production!
+ARG POSTGRES_USER="dummy-user"                # Must be overridden in CI/CD/production!
 
 # --------------------------
 # Environment Setup
@@ -57,17 +57,18 @@ RUN apt-get update && \
     libpq-dev python3-dev gcc curl binutils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    # Security: Remove risky permissions
+    # Security: Remove SUID/GUID permissions
     find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
 
+    
 # --------------------------
-# User & Filesystem Setup
+# Application Setup
 # --------------------------
 RUN useradd --uid 1001 --create-home --shell /bin/false appuser && \
     mkdir -p /app/staticfiles /var/log/django && \
-    chown -R appuser:appuser /app /var/log/django && \
-    chmod 755 /app /var/log/django
+    chown -R appuser:appuser /app /var/log/django
 
+    
 # --------------------------
 # Python Environment
 # --------------------------
