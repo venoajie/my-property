@@ -83,7 +83,8 @@ COPY requirements/ .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
     -r base.txt \
-    -r prod.txt
+    -r prod.txt 
+    #-r dev.txt  # Add this line if needed
 
 # --------------------------
 # Application Deployment
