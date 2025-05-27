@@ -7,8 +7,13 @@
 # -------------------------
 # Global Build Parameters
 # -------------------------
-ARG BUILD_UID=1001                       # Match host user ID
-ARG PYTHON_VERSION="3.12-slim-bookworm"  # Explicit version pinning
+
+ARG BUILD_UID=1001
+ARG SECRET_KEY="dummy-secret-for-build"
+ARG POSTGRES_PASSWORD="dummy-db-password"
+ARG POSTGRES_DB="dummy-db"
+ARG POSTGRES_USER="dummy-user"
+
 
 # Required for build stage
 ARG BUILD_UID
@@ -19,6 +24,7 @@ FROM python:${PYTHON_VERSION} AS builder
 # -------------------------
 # System Hardening
 # -------------------------
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libpq-dev python3-dev gcc && \
@@ -26,13 +32,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
 
-# -------------------------
+    # -------------------------
 # User & Environment Setup
 # -------------------------
 RUN useradd --uid ${BUILD_UID} --create-home --shell /bin/false appuser && \
     mkdir -p /app/staticfiles && \
     chown -R appuser:appuser /app
-
 # -------------------------
 # Dependency Management
 # -------------------------
@@ -55,7 +60,8 @@ RUN python manage.py collectstatic --noinput --settings=config.settings.build
 FROM python:${PYTHON_VERSION}
 
 # Re-declare build arguments for this stage
-ARG BUILD_UID
+ARG BUILD_UID=1001  # Default if not overridden
+
 
 # -------------------------
 # Runtime Security
@@ -79,8 +85,7 @@ RUN chmod 644 /usr/local/share/ca-certificates/rootCA.crt && \
 # -------------------------
 RUN useradd --uid ${BUILD_UID} --create-home --shell /bin/false appuser && \
     mkdir -p /app/staticfiles && \
-    chown -R appuser:appuser /app
-    
+    chown -R appuser:appuser /app    
     
 WORKDIR /app
 

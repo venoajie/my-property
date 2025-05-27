@@ -4,12 +4,15 @@
 
 .PHONY: validate secrets setup build clean
 
+# Enable BuildKit and ensure UID safety
+DOCKER_BUILDKIT=1
+BUILD_UID ?= $(shell id -u 2>/dev/null || echo 1001)
+
 # ---- Environment Variables ----
-DOCKER_IMAGE ?= realestate-app
-BUILD_ARGS := --build-arg BUILD_UID=$(shell id -u) \
-              --build-arg PYTHON_VERSION=3.12-slim-bookworm \
-              --build-arg SECRET_KEY=$(shell cat secrets/db_password.txt) \
-              --build-arg POSTGRES_PASSWORD=$(shell cat secrets/db_password.txt)
+BUILD_ARGS := \
+    --build-arg BUILD_UID=$(BUILD_UID) \
+    --build-arg SECRET_KEY=$(shell cat secrets/db_password.txt) \
+    --build-arg POSTGRES_PASSWORD=$(shell cat secrets/db_password.txt)
 
 # ---- Core Workflow ----
 all: validate setup build
