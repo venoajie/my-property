@@ -7,8 +7,11 @@
 # -------------------------
 # Global Build Parameters
 # -------------------------
-ARG PYTHON_VERSION="3.12-slim-bookworm"  # Explicit version pinning
 ARG BUILD_UID=1001                       # Match host user ID
+ARG PYTHON_VERSION="3.12-slim-bookworm"  # Explicit version pinning
+
+# Required for build stage
+ARG BUILD_UID
 
 # ===== BUILDER STAGE ===== #
 FROM python:${PYTHON_VERSION} AS builder
@@ -53,7 +56,6 @@ FROM python:${PYTHON_VERSION}
 
 # Re-declare build arguments for this stage
 ARG BUILD_UID
-
 
 # -------------------------
 # Runtime Security
